@@ -14,7 +14,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { useState } from "react";
+import { useUIStore } from "@/store/uiStore";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -26,16 +26,24 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = useUIStore((s) => s.sidebarCollapsed);
+  const toggleSidebar = useUIStore((s) => s.toggleSidebar);
 
   return (
     <motion.aside
       animate={{ width: collapsed ? 72 : 240 }}
       transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      className="fixed left-0 top-0 bottom-0 z-40 flex flex-col glass border-r border-white/8 overflow-hidden"
+      className="fixed left-0 top-0 bottom-0 z-40 flex flex-col overflow-hidden"
+      style={{
+        background: "rgba(8, 5, 22, 0.92)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        borderRight: "1px solid rgba(124, 58, 237, 0.15)",
+      }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-white/8">
+      <div className="flex items-center gap-3 px-4 py-5"
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <div className="w-9 h-9 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center flex-shrink-0 shadow-glow-sm">
           <Zap size={18} className="text-accent-light" />
         </div>
@@ -101,9 +109,9 @@ export function Sidebar() {
       </nav>
 
       {/* Collapse toggle */}
-      <div className="p-3 border-t border-white/8">
+      <div className="p-3" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <button
-          onClick={() => setCollapsed((c) => !c)}
+          onClick={toggleSidebar}
           className="w-full flex items-center justify-center p-2 rounded-[var(--radius-md)] text-white/30 hover:text-white/70 hover:bg-white/5 transition-all"
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
