@@ -201,15 +201,22 @@ export default function SettingsPage() {
         >
           <GlassCard className="overflow-hidden">
             <div
-              className="flex items-center gap-2.5 px-5 py-3 border-b border-white/8"
-              style={{ backgroundColor: `${section.color}08` }}
+              className="flex items-center gap-2.5 px-5 py-3"
+              style={{
+                backgroundColor: `${section.color}08`,
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
+              }}
             >
               <span style={{ color: section.color }}>{section.icon}</span>
               <h3 className="text-sm font-semibold text-white/70">{section.title}</h3>
             </div>
-            <div className="divide-y divide-white/5">
-              {section.items.map((item) => (
-                <div key={item.label} className="flex items-center justify-between px-5 py-4 gap-4">
+            <div>
+              {section.items.map((item, idx) => (
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between px-5 py-4 gap-4"
+                  style={idx > 0 ? { borderTop: "1px solid rgba(255,255,255,0.04)" } : {}}
+                >
                   <div>
                     <p className="text-sm font-medium text-white/80">{item.label}</p>
                     <p className="text-xs text-white/35 mt-0.5">{item.desc}</p>

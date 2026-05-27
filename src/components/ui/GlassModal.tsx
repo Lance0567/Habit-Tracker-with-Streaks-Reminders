@@ -72,7 +72,10 @@ export function GlassModal({
             transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
           >
             {title && (
-              <div className="flex items-center justify-between px-6 py-4 border-b border-white/8">
+              <div
+                className="flex items-center justify-between px-6 py-4"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              >
                 <h2 className="text-base font-semibold text-white/90">{title}</h2>
                 <button
                   onClick={onClose}
