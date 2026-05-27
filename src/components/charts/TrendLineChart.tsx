@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import {
   LineChart,
   Line,
@@ -11,6 +12,14 @@ import {
   Legend,
   type TooltipProps,
 } from "recharts";
+
+const TOOLTIP_STYLE: React.CSSProperties = {
+  background: "rgba(10, 7, 28, 0.97)",
+  border: "1px solid rgba(124, 58, 237, 0.28)",
+  borderRadius: 10,
+  padding: "8px 12px",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
+};
 
 const FALLBACK_DATA = [
   { day: "Mon", h1: 1, h2: 1, h3: 0, h4: 1 },
@@ -32,10 +41,10 @@ const FALLBACK_HABITS = [
 function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="glass-elevated rounded-[var(--radius-md)] px-3 py-2 border border-white/10 text-xs space-y-1">
-      <p className="text-white/50 mb-1.5">{label}</p>
+    <div style={TOOLTIP_STYLE}>
+      <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 10, marginBottom: 6 }}>{label}</p>
       {payload.map((p) => (
-        <p key={p.dataKey as string} style={{ color: p.color }}>
+        <p key={p.dataKey as string} style={{ color: p.color as string, fontSize: 12, marginBottom: 2, fontWeight: 500 }}>
           {p.name}: {p.value ? "✓" : "✗"}
         </p>
       ))}

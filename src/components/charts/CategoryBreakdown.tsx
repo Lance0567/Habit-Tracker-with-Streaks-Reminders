@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import {
   RadarChart,
   Radar,
@@ -9,6 +10,14 @@ import {
   Tooltip,
   type TooltipProps,
 } from "recharts";
+
+const TOOLTIP_STYLE: React.CSSProperties = {
+  background: "rgba(10, 7, 28, 0.97)",
+  border: "1px solid rgba(124, 58, 237, 0.28)",
+  borderRadius: 10,
+  padding: "8px 12px",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
+};
 
 const FALLBACK = [
   { category: "Health", value: 82 },
@@ -20,9 +29,9 @@ const FALLBACK = [
 function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="glass-elevated rounded-[var(--radius-md)] px-3 py-2 border border-white/10 text-xs">
-      <p className="text-white/50">{payload[0].payload.category}</p>
-      <p className="text-accent-light font-semibold">{payload[0].value}%</p>
+    <div style={TOOLTIP_STYLE}>
+      <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 10, marginBottom: 4 }}>{payload[0].payload.category}</p>
+      <p style={{ color: "#A78BFA", fontWeight: 600, fontSize: 12 }}>{payload[0].value}%</p>
     </div>
   );
 }
