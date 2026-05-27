@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# TypeScript build info
+tsconfig.tsbuildinfo
+next-env.d.ts
+
+# debug / screenshot scripts
+debug_app.mjs
+screenshot_app.mjs
+screenshot_detail.mjs
+screenshot_final.mjs
+
+# claude internal
+.claude/
+
+# env files
+.env
+.env.local
+.env*.local
+
+# OS
+.DS_Store
+Thumbs.db
