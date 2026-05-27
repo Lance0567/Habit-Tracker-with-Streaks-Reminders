@@ -1,8 +1,9 @@
 "use client";
 
-import { Bell, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { format } from "date-fns";
 import { GlassButton } from "@/components/ui/GlassButton";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import Link from "next/link";
 
 function getGreeting() {
@@ -16,7 +17,15 @@ export function TopBar() {
   const today = new Date();
 
   return (
-    <header className="h-16 flex items-center justify-between px-6 glass border-b border-white/8 sticky top-0 z-30">
+    <header
+      className="h-16 flex items-center justify-between px-6 sticky top-0 z-30"
+      style={{
+        background: "rgba(8, 5, 22, 0.88)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255,255,255,0.04)",
+      }}
+    >
       <div>
         <p className="text-xs text-white/40 font-medium">
           {format(today, "EEEE, MMMM d")}
@@ -33,10 +42,7 @@ export function TopBar() {
             New Habit
           </GlassButton>
         </Link>
-        <button className="relative w-9 h-9 glass rounded-[var(--radius-md)] flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/10 transition-all border border-white/8">
-          <Bell size={16} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-accent shadow-glow-sm" />
-        </button>
+        <NotificationBell />
       </div>
     </header>
   );

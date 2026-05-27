@@ -10,10 +10,11 @@ import { GlassInput, GlassTextarea } from "@/components/ui/GlassInput";
 import { Spinner } from "@/components/ui/Spinner";
 import { FrequencySelector } from "@/components/habits/FrequencySelector";
 import { CategoryFilter } from "@/components/categories/CategoryFilter";
+import { ReminderForm } from "@/components/notifications/ReminderForm";
 import { useHabitStore } from "@/store/habitStore";
 import { useCategories } from "@/hooks/useCategories";
 import { HABIT_COLORS } from "@/lib/constants";
-import type { Habit, HabitFrequency } from "@/types";
+import type { Habit, HabitFrequency, Reminder } from "@/types";
 
 export default function EditHabitPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -54,6 +55,7 @@ function EditForm({ habit }: { habit: Habit }) {
   const [categoryId, setCategoryId] = useState<string | null>(habit.categoryId);
   const [frequency, setFrequency] = useState<HabitFrequency>(habit.frequency);
   const [customDays, setCustomDays] = useState(habit.customDays ?? []);
+  const [reminders, setReminders] = useState<Reminder[]>(habit.reminders);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -66,6 +68,7 @@ function EditForm({ habit }: { habit: Habit }) {
       categoryId,
       frequency,
       customDays: frequency === "custom" ? customDays : undefined,
+      reminders,
       updatedAt: new Date().toISOString(),
     });
     router.push(`/habits/${habit.id}`);
@@ -129,6 +132,10 @@ function EditForm({ habit }: { habit: Habit }) {
       <GlassCard className="p-5 space-y-3">
         <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider">Frequency</h3>
         <FrequencySelector value={frequency} onChange={setFrequency} customDays={customDays} onCustomDaysChange={setCustomDays} />
+      </GlassCard>
+
+      <GlassCard className="p-5">
+        <ReminderForm reminders={reminders} onChange={setReminders} />
       </GlassCard>
 
       <div className="flex gap-3">

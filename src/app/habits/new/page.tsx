@@ -8,9 +8,10 @@ import { GlassButton } from "@/components/ui/GlassButton";
 import { GlassInput, GlassTextarea } from "@/components/ui/GlassInput";
 import { FrequencySelector } from "@/components/habits/FrequencySelector";
 import { CategoryFilter } from "@/components/categories/CategoryFilter";
+import { ReminderForm } from "@/components/notifications/ReminderForm";
 import { useCategories } from "@/hooks/useCategories";
 import { useHabitStore } from "@/store/habitStore";
-import type { Habit, HabitFrequency } from "@/types";
+import type { Habit, HabitFrequency, Reminder } from "@/types";
 import { HABIT_COLORS } from "@/lib/constants";
 import { ArrowLeft } from "lucide-react";
 
@@ -25,6 +26,7 @@ export default function NewHabitPage() {
   const [color, setColor] = useState("#7C3AED");
   const [frequency, setFrequency] = useState<HabitFrequency>("daily");
   const [customDays, setCustomDays] = useState<number[]>([]);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
   const [saving, setSaving] = useState(false);
 
   const handleCreate = async () => {
@@ -42,7 +44,7 @@ export default function NewHabitPage() {
       customDays: frequency === "custom" ? customDays : undefined,
       targetCount: 1,
       unit: "times",
-      reminders: [],
+      reminders,
       archived: false,
       createdAt: now,
       updatedAt: now,
@@ -124,6 +126,10 @@ export default function NewHabitPage() {
           customDays={customDays}
           onCustomDaysChange={setCustomDays}
         />
+      </GlassCard>
+
+      <GlassCard className="p-5">
+        <ReminderForm reminders={reminders} onChange={setReminders} />
       </GlassCard>
 
       <div className="flex gap-3">
