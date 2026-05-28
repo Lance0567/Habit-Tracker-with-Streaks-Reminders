@@ -77,7 +77,9 @@ export function HabitCard({
             )}
           </div>
         </div>
-        <StreakBadge count={streak} size="sm" />
+        <div className="flex-shrink-0">
+          <StreakBadge count={streak} size="sm" />
+        </div>
       </div>
 
       {/* Footer */}

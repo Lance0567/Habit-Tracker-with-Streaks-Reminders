@@ -7,6 +7,7 @@ interface HeatMapCellProps {
   day: HeatMapDay;
   color?: string;
   cellSize?: number;
+  onHover?: (day: HeatMapDay | null, clientX: number, clientY: number) => void;
 }
 
 function getColor(level: 0 | 1 | 2 | 3 | 4, color: string): string {
@@ -19,14 +20,15 @@ function getColor(level: 0 | 1 | 2 | 3 | 4, color: string): string {
   }
 }
 
-export function HeatMapCell({ day, color = "#7C3AED", cellSize = 12 }: HeatMapCellProps) {
+export function HeatMapCell({ day, color = "#7C3AED", cellSize = 12, onHover }: HeatMapCellProps) {
   const [hovered, setHovered] = useState(false);
   const fill = getColor(day.level, color);
 
   return (
     <g
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={(e) => { setHovered(true); onHover?.(day, e.clientX, e.clientY); }}
+      onMouseLeave={() => { setHovered(false); onHover?.(null, 0, 0); }}
+      onMouseMove={(e) => hovered && onHover?.(day, e.clientX, e.clientY)}
       style={{ cursor: "default" }}
     >
       <rect

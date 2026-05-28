@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
 import { format, startOfWeek, addDays, parseISO } from "date-fns";
 import { HeatMapCell } from "./HeatMapCell";
-import { Tooltip } from "@/components/ui/Tooltip";
 import type { HeatMapDay } from "@/types";
 
 interface HeatMapProps {
@@ -19,6 +18,11 @@ const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov
 export function HeatMap({ days, color = "#7C3AED", cellSize = 12, gap = 3 }: HeatMapProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const stride = cellSize + gap;
+  const [tooltip, setTooltip] = useState<{ day: HeatMapDay; x: number; y: number } | null>(null);
+
+  const handleHover = (day: HeatMapDay | null, clientX: number, clientY: number) => {
+    setTooltip(day ? { day, x: clientX, y: clientY } : null);
+  };
 
   // Build 52-week grid
   const grid = useMemo(() => {
@@ -101,7 +105,7 @@ export function HeatMap({ days, color = "#7C3AED", cellSize = 12, gap = 3 }: Hea
             {grid.map((col, ci) =>
               col.map((day, ri) => (
                 <g key={day.date} transform={`translate(${ci * stride}, ${ri * stride})`}>
-                  <HeatMapCell day={day} color={color} cellSize={cellSize} />
+                  <HeatMapCell day={day} color={color} cellSize={cellSize} onHover={handleHover} />
                 </g>
               ))
             )}
@@ -131,6 +135,31 @@ export function HeatMap({ days, color = "#7C3AED", cellSize = 12, gap = 3 }: Hea
           <span className="text-[10px] text-white/25 ml-1">More</span>
         </div>
       </div>
+
+      {/* Floating tooltip — fixed to viewport so it's never clipped by overflow */}
+      {tooltip && (
+        <div
+          className="fixed z-50 pointer-events-none px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap"
+          style={{
+            left: tooltip.x + 14,
+            top: tooltip.y - 44,
+            background: "rgba(14,9,36,0.97)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
+          }}
+        >
+          <span className="text-white/45 mr-2">
+            {format(parseISO(tooltip.day.date), "EEE, MMM d yyyy")}
+          </span>
+          {tooltip.day.count === 0 ? (
+            <span className="text-white/25">No completions</span>
+          ) : (
+            <span style={{ color }}>
+              {tooltip.day.count} completion{tooltip.day.count !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

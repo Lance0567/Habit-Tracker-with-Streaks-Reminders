@@ -52,31 +52,35 @@ export default function HabitDetailPage({ params }: { params: { id: string } }) 
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3"
+        className="flex flex-wrap items-center gap-3"
       >
         <button
           onClick={() => router.back()}
-          className="p-2 glass rounded-[var(--radius-md)] text-white/40 hover:text-white/80 transition-all border border-white/8"
+          className="p-2 glass rounded-[var(--radius-md)] text-white/40 hover:text-white/80 transition-all border border-white/8 flex-shrink-0"
         >
           <ArrowLeft size={16} />
         </button>
         <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center"
+          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: `${habit.color}20`, border: `1px solid ${habit.color}30` }}
         >
           <IconComponent size={20} color={habit.color} />
         </div>
-        <div className="flex-1">
-          <h2 className="text-xl font-bold text-white/90">{habit.name}</h2>
-          <p className="text-sm text-white/35">{habit.description}</p>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl font-bold text-white/90 truncate">{habit.name}</h2>
+          {habit.description && (
+            <p className="text-sm text-white/35 truncate">{habit.description}</p>
+          )}
         </div>
-        <StreakBadge count={stats.currentStreak} size="md" />
-        <Link href={`/habits/${habit.id}/edit`}>
-          <GlassButton variant="secondary" size="sm">
-            <Edit size={14} />
-            Edit
-          </GlassButton>
-        </Link>
+        <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+          <StreakBadge count={stats.currentStreak} size="md" />
+          <Link href={`/habits/${habit.id}/edit`}>
+            <GlassButton variant="secondary" size="sm">
+              <Edit size={14} />
+              Edit
+            </GlassButton>
+          </Link>
+        </div>
       </motion.div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
