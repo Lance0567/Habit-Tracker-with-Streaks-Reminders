@@ -3,7 +3,6 @@
 import { useState, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Plus, Search } from "lucide-react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { GlassButton } from "@/components/ui/GlassButton";
 import { GlassInput } from "@/components/ui/GlassInput";
@@ -12,12 +11,14 @@ import { CategoryFilter } from "@/components/categories/CategoryFilter";
 import { Spinner } from "@/components/ui/Spinner";
 import { useHabits } from "@/hooks/useHabits";
 import { useCategories } from "@/hooks/useCategories";
+import { useUIStore } from "@/store/uiStore";
 
 // Inner component reads URL search params (requires Suspense boundary)
 function HabitsContent() {
   const searchParams = useSearchParams();
   const { habits, completedToday, streaks, completionRates, isLoading, toggleLog } = useHabits();
   const { categories } = useCategories();
+  const setNewHabitOpen = useUIStore((s) => s.setNewHabitOpen);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     searchParams.get("category")
@@ -48,12 +49,10 @@ function HabitsContent() {
           <h2 className="text-2xl font-bold text-white/90">All Habits</h2>
           <p className="text-sm text-white/35 mt-0.5">{habits.length} habits tracked</p>
         </div>
-        <Link href="/habits/new">
-          <GlassButton variant="primary">
-            <Plus size={16} />
-            New Habit
-          </GlassButton>
-        </Link>
+        <GlassButton variant="primary" onClick={() => setNewHabitOpen(true)}>
+          <Plus size={16} />
+          New Habit
+        </GlassButton>
       </motion.div>
 
       <div className="flex flex-col sm:flex-row gap-3">

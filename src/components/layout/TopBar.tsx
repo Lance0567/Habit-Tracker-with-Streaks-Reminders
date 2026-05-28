@@ -2,10 +2,9 @@
 
 import { Plus } from "lucide-react";
 import { format } from "date-fns";
-import { usePathname } from "next/navigation";
 import { GlassButton } from "@/components/ui/GlassButton";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import Link from "next/link";
+import { useUIStore } from "@/store/uiStore";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -16,8 +15,7 @@ function getGreeting() {
 
 export function TopBar() {
   const today = new Date();
-  const pathname = usePathname();
-  const onHabitsRoute = pathname.startsWith("/habits");
+  const setNewHabitOpen = useUIStore((s) => s.setNewHabitOpen);
 
   return (
     <header
@@ -39,14 +37,10 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-2">
-        {!onHabitsRoute && (
-          <Link href="/habits/new">
-            <GlassButton variant="primary" size="sm">
-              <Plus size={14} />
-              New Habit
-            </GlassButton>
-          </Link>
-        )}
+        <GlassButton variant="primary" size="sm" onClick={() => setNewHabitOpen(true)}>
+          <Plus size={14} />
+          New Habit
+        </GlassButton>
         <NotificationBell />
       </div>
     </header>

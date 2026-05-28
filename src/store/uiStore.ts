@@ -17,16 +17,19 @@ interface UIStore {
   sidebarCollapsed: boolean;
   toasts: Toast[];
   milestoneModal: MilestoneData | null;
+  newHabitOpen: boolean;
   toggleSidebar: () => void;
   addToast: (message: string, type?: Toast["type"]) => void;
   removeToast: (id: string) => void;
   setMilestoneModal: (data: MilestoneData | null) => void;
+  setNewHabitOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
   sidebarCollapsed: false,
   toasts: [],
   milestoneModal: null,
+  newHabitOpen: false,
 
   toggleSidebar: () =>
     set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
@@ -43,4 +46,5 @@ export const useUIStore = create<UIStore>((set) => ({
     set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 
   setMilestoneModal: (data) => set({ milestoneModal: data }),
+  setNewHabitOpen: (open) => set({ newHabitOpen: open }),
 }));
