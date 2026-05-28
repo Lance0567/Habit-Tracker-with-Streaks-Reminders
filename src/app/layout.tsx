@@ -3,7 +3,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, MotionConfig } from "framer-motion";
 import { AnimatedBackground } from "@/components/layout/AnimatedBackground";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
@@ -24,10 +24,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen antialiased bg-[#050510]">
-        <StoreProvider>
-          <AnimatedBackground />
-          <LayoutShell>{children}</LayoutShell>
-        </StoreProvider>
+        <MotionConfig reducedMotion="user">
+          <StoreProvider>
+            <AnimatedBackground />
+            <LayoutShell>{children}</LayoutShell>
+          </StoreProvider>
+        </MotionConfig>
       </body>
     </html>
   );

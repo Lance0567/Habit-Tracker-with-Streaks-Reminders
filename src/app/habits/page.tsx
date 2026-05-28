@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { GlassButton } from "@/components/ui/GlassButton";
 import { GlassInput } from "@/components/ui/GlassInput";
 import { HabitGrid } from "@/components/habits/HabitGrid";
@@ -12,11 +13,15 @@ import { Spinner } from "@/components/ui/Spinner";
 import { useHabits } from "@/hooks/useHabits";
 import { useCategories } from "@/hooks/useCategories";
 
-export default function HabitsPage() {
+// Inner component reads URL search params (requires Suspense boundary)
+function HabitsContent() {
+  const searchParams = useSearchParams();
   const { habits, completedToday, streaks, completionRates, isLoading, toggleLog } = useHabits();
   const { categories } = useCategories();
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    searchParams.get("category")
+  );
 
   const filtered = habits.filter((h) => {
     const matchSearch = h.name.toLowerCase().includes(search.toLowerCase());
@@ -75,5 +80,17 @@ export default function HabitsPage() {
         onToggle={toggleLog}
       />
     </div>
+  );
+}
+
+export default function HabitsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <Spinner size={32} />
+      </div>
+    }>
+      <HabitsContent />
+    </Suspense>
   );
 }

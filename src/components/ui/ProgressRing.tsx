@@ -22,7 +22,10 @@ export function ProgressRing({
   const offset = circumference - (Math.min(value, 100) / 100) * circumference;
 
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+    <div
+      className="relative inline-flex items-center justify-center"
+      style={{ width: size, height: size, filter: `drop-shadow(0 0 4px ${color})` }}
+    >
       <svg width={size} height={size} className="-rotate-90">
         <circle
           cx={size / 2}
@@ -44,7 +47,6 @@ export function ProgressRing({
           strokeDashoffset={offset}
           style={{
             transition: "stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1)",
-            filter: `drop-shadow(0 0 4px ${color})`,
           }}
         />
       </svg>

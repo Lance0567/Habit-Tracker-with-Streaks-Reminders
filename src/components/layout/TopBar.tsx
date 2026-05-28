@@ -2,6 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { format } from "date-fns";
+import { usePathname } from "next/navigation";
 import { GlassButton } from "@/components/ui/GlassButton";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import Link from "next/link";
@@ -15,6 +16,8 @@ function getGreeting() {
 
 export function TopBar() {
   const today = new Date();
+  const pathname = usePathname();
+  const onHabitsRoute = pathname.startsWith("/habits");
 
   return (
     <header
@@ -36,12 +39,14 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-2">
-        <Link href="/habits/new">
-          <GlassButton variant="primary" size="sm">
-            <Plus size={14} />
-            New Habit
-          </GlassButton>
-        </Link>
+        {!onHabitsRoute && (
+          <Link href="/habits/new">
+            <GlassButton variant="primary" size="sm">
+              <Plus size={14} />
+              New Habit
+            </GlassButton>
+          </Link>
+        )}
         <NotificationBell />
       </div>
     </header>

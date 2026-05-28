@@ -3,20 +3,43 @@
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { HabitGrid } from "@/components/habits/HabitGrid";
-import { StreakBadge } from "@/components/habits/StreakBadge";
 import { ProgressRing } from "@/components/ui/ProgressRing";
-import { Spinner } from "@/components/ui/Spinner";
 import { useHabits } from "@/hooks/useHabits";
+import { useGlobalAnalytics } from "@/hooks/useAnalytics";
 import { useLocalTime } from "@/hooks/useLocalTime";
 import { Flame, CheckCircle, Target, TrendingUp } from "lucide-react";
 
+// violet(0%) → cyan(50%) → emerald(100%)
+function ringColor(pct: number): string {
+  const stops = [
+    { p: 0,   r: 0x7C, g: 0x3A, b: 0xED },
+    { p: 0.5, r: 0x06, g: 0xB6, b: 0xD4 },
+    { p: 1,   r: 0x10, g: 0xB9, b: 0x81 },
+  ];
+  const c = Math.max(0, Math.min(1, pct));
+  const lo = c <= 0.5 ? stops[0] : stops[1];
+  const hi = c <= 0.5 ? stops[1] : stops[2];
+  const t = c <= 0.5 ? c / 0.5 : (c - 0.5) / 0.5;
+  const hex = (v: number) => Math.round(v).toString(16).padStart(2, "0");
+  return `#${hex(lo.r + (hi.r - lo.r) * t)}${hex(lo.g + (hi.g - lo.g) * t)}${hex(lo.b + (hi.b - lo.b) * t)}`;
+}
+
+function motivationalCopy(pct: number): string {
+  if (pct === 0) return "Ready to build momentum?";
+  if (pct < 0.5) return "Great start — keep going.";
+  if (pct < 1) return "Almost there — finish strong.";
+  return "Mission complete. Outstanding.";
+}
+
 export default function DashboardPage() {
   const { habits, completedToday, streaks, completionRates, isLoading, toggleLog } = useHabits();
+  const { trendData } = useGlobalAnalytics();
   const { formatted } = useLocalTime();
 
   const totalHabits = habits.length;
   const completedCount = completedToday.size;
-  const overallRate = totalHabits === 0 ? 0 : Math.round((completedCount / totalHabits) * 100);
+  const pct = totalHabits === 0 ? 0 : completedCount / totalHabits;
+  const overallRate = Math.round(pct * 100);
   const longestStreak = Object.values(streaks).reduce((a, b) => Math.max(a, b), 0);
   const avgRate =
     habits.length === 0
@@ -25,94 +48,211 @@ export default function DashboardPage() {
           Object.values(completionRates).reduce((a, b) => a + b, 0) / habits.length
         );
 
-  const stats = [
+  const color = ringColor(pct);
+
+  // Mon-indexed today (Mon=0 … Sun=6)
+  const todayIdx = (new Date().getDay() + 6) % 7;
+
+  const weekDays = trendData.map((d, i) => {
+    const keys = Object.keys(d).filter((k) => k !== "day");
+    const filled = keys.reduce((s, k) => s + (d[k] as number), 0);
+    const dayPct = keys.length === 0 ? 0 : filled / keys.length;
+    return {
+      label: d.day.slice(0, 2),
+      pct: dayPct,
+      isToday: i === todayIdx,
+      isPast: i < todayIdx,
+    };
+  });
+
+  const statItems = [
     {
-      label: "Today's Progress",
+      label: "Today",
       value: `${completedCount}/${totalHabits}`,
-      sub: "habits completed",
-      icon: <CheckCircle size={18} />,
+      sub: "completed",
+      icon: <CheckCircle size={16} />,
       color: "#10B981",
-      extra: <ProgressRing value={overallRate} size={36} strokeWidth={3} color="#10B981" />,
     },
     {
-      label: "Longest Streak",
-      value: longestStreak,
+      label: "Best Streak",
+      value: `${longestStreak}d`,
       sub: "days in a row",
-      icon: <Flame size={18} />,
+      icon: <Flame size={16} />,
       color: "#F59E0B",
-      extra: <StreakBadge count={longestStreak} size="lg" />,
     },
     {
-      label: "Active Habits",
-      value: totalHabits,
-      sub: "being tracked",
-      icon: <Target size={18} />,
+      label: "Active",
+      value: `${totalHabits}`,
+      sub: "habits tracked",
+      icon: <Target size={16} />,
       color: "#7C3AED",
     },
     {
-      label: "Avg Completion",
+      label: "Avg Rate",
       value: `${avgRate}%`,
       sub: "last 30 days",
-      icon: <TrendingUp size={18} />,
+      icon: <TrendingUp size={16} />,
       color: "#06B6D4",
     },
   ];
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner size={32} />
+      <div className="space-y-5">
+        <div className="skeleton rounded-xl h-40" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="skeleton rounded-xl h-16" />
+          ))}
+        </div>
+        <div className="skeleton rounded-xl h-28" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Hero */}
       <motion.div
-        initial={{ opacity: 0, y: -8 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <p className="text-xs font-medium text-white/30 uppercase tracking-widest mb-1">
-          {formatted}
-        </p>
-        <h2 className="text-2xl font-bold text-white/90">Today&apos;s Dashboard</h2>
+        <GlassCard className="p-6">
+          <div className="flex items-center gap-6">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium uppercase tracking-widest text-white/30 mb-2">
+                {formatted}
+              </p>
+              <h1 className="text-3xl font-black tracking-tight text-white mb-2">
+                Today&apos;s Mission
+              </h1>
+              <p className="text-sm text-white/50 mb-4">{motivationalCopy(pct)}</p>
+              <span
+                className="inline-block text-xs font-mono px-2.5 py-1 rounded-full"
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  color: "rgba(255,255,255,0.45)",
+                }}
+              >
+                {totalHabits} active habits
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-1 flex-shrink-0">
+              <ProgressRing value={overallRate} size={140} strokeWidth={8} color={color}>
+                <span
+                  className="text-3xl font-black tabular-nums"
+                  style={{ color }}
+                >
+                  {overallRate}%
+                </span>
+              </ProgressRing>
+              <p className="text-xs text-white/30 tabular-nums">
+                {completedCount} of {totalHabits}
+              </p>
+            </div>
+          </div>
+        </GlassCard>
       </motion.div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, i) => (
+      {/* Stat Strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {statItems.map((s, i) => (
           <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 12 }}
+            key={s.label}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08, duration: 0.35 }}
+            transition={{ delay: 0.08 + i * 0.06, duration: 0.3 }}
           >
-            <GlassCard className="p-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: `${stat.color}20`, color: stat.color }}
-                >
-                  {stat.icon}
-                </span>
-                {stat.extra}
-              </div>
-              <div>
-                <p className="text-2xl font-bold tabular-nums text-white/90">{stat.value}</p>
-                <p className="text-xs text-white/35 mt-0.5">{stat.sub}</p>
-                <p className="text-xs font-medium text-white/50 mt-1">{stat.label}</p>
+            <GlassCard
+              className="p-3 flex items-center gap-3 border-l-4"
+              style={{ borderColor: s.color } as React.CSSProperties}
+            >
+              <span
+                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: `${s.color}20`, color: s.color }}
+              >
+                {s.icon}
+              </span>
+              <div className="min-w-0">
+                <p className="text-lg font-bold tabular-nums text-white/90 leading-none">
+                  {s.value}
+                </p>
+                <p className="text-xs text-white/35 mt-0.5 truncate">{s.label}</p>
               </div>
             </GlassCard>
           </motion.div>
         ))}
       </div>
 
-      <div>
-        <div className="flex items-center justify-between mb-4">
+      {/* This Week */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.32, duration: 0.35 }}
+      >
+        <GlassCard className="p-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-white/30 mb-3">
+            This Week
+          </p>
+          <div className="grid grid-cols-7 gap-2">
+            {weekDays.map((day, i) => (
+              <div key={i} className="flex flex-col items-center gap-1.5">
+                <span
+                  className={`text-xs font-semibold ${
+                    day.isToday ? "text-white" : "text-white/30"
+                  }`}
+                >
+                  {day.label}
+                </span>
+                <div
+                  className="w-full rounded-full overflow-hidden relative"
+                  style={{ height: 40, background: "rgba(255,255,255,0.05)" }}
+                >
+                  <div
+                    className="absolute bottom-0 left-0 right-0 rounded-full"
+                    style={{
+                      height: `${Math.round(day.pct * 100)}%`,
+                      background: day.isToday
+                        ? color
+                        : day.isPast && day.pct > 0
+                        ? "rgba(255,255,255,0.18)"
+                        : "transparent",
+                      transition: "height 0.5s cubic-bezier(0.4,0,0.2,1)",
+                    }}
+                  />
+                </div>
+                <span
+                  className={`text-xs tabular-nums ${
+                    day.isToday ? "text-white/70" : "text-white/25"
+                  }`}
+                >
+                  {day.isToday || day.isPast ? `${Math.round(day.pct * 100)}%` : "—"}
+                </span>
+                {day.isToday && (
+                  <span className="w-1 h-1 rounded-full bg-white/60" />
+                )}
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+      </motion.div>
+
+      {/* Habits */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.35 }}
+      >
+        <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-white/80">Today&apos;s Habits</h3>
-          <span className="text-xs text-white/30">
-            {completedCount} of {totalHabits} done
-          </span>
+          <motion.span
+            className="text-xs font-bold px-2 py-0.5 rounded-full tabular-nums"
+            animate={{ color, backgroundColor: `${color}25` }}
+            transition={{ duration: 0.6 }}
+          >
+            {overallRate}%
+          </motion.span>
         </div>
         <HabitGrid
           habits={habits}
@@ -121,7 +261,7 @@ export default function DashboardPage() {
           completionRates={completionRates}
           onToggle={toggleLog}
         />
-      </div>
+      </motion.div>
     </div>
   );
 }

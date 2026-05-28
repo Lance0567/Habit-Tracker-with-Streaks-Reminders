@@ -21,6 +21,8 @@ export function CheckInButton({
       onClick={onToggle}
       className="relative flex items-center justify-center rounded-full cursor-pointer focus:outline-none"
       style={{ width: size, height: size }}
+      animate={{ filter: checked ? `drop-shadow(0 0 10px ${color})` : "none" }}
+      transition={{ duration: 0.3 }}
       whileHover={{ scale: 1.08 }}
       whileTap={{ scale: 0.92 }}
       aria-label={checked ? "Uncheck habit" : "Check habit"}
@@ -44,7 +46,7 @@ export function CheckInButton({
           strokeDashoffset={checked ? 0 : Math.PI * (size - 4) * 0.25}
           style={{
             transition: "all 0.5s cubic-bezier(0.34,1.56,0.64,1)",
-            filter: checked ? `drop-shadow(0 0 6px ${color})` : "none",
+            filter: "none",
           }}
         />
       </svg>
@@ -54,7 +56,6 @@ export function CheckInButton({
         className="absolute inset-1 rounded-full"
         animate={{
           backgroundColor: checked ? color : "rgba(255,255,255,0.04)",
-          boxShadow: checked ? `0 0 16px ${color}80` : "none",
         }}
         transition={{ duration: 0.3 }}
       />

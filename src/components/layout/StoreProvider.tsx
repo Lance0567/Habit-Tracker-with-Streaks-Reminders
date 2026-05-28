@@ -3,11 +3,18 @@
 import { useEffect } from "react";
 import { useHabitStore } from "@/store/habitStore";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useMilestoneDetector } from "@/hooks/useMilestoneDetector";
 import { PermissionPrompt } from "@/components/notifications/PermissionPrompt";
+import { MilestoneModal } from "@/components/habits/MilestoneModal";
 
 function NotificationManager() {
   useNotifications();
   return <PermissionPrompt />;
+}
+
+function MilestoneManager() {
+  useMilestoneDetector();
+  return <MilestoneModal />;
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
@@ -21,6 +28,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     <>
       {children}
       <NotificationManager />
+      <MilestoneManager />
     </>
   );
 }

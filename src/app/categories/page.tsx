@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { getIcon } from "@/lib/icons";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GlassButton } from "@/components/ui/GlassButton";
@@ -14,6 +15,7 @@ import type { Category } from "@/types";
 export default function CategoriesPage() {
   const { categories, habits, isLoading, addCategory, updateCategory, deleteCategory } =
     useCategories();
+  const router = useRouter();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Category | null>(null);
@@ -114,7 +116,11 @@ export default function CategoriesPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ delay: i * 0.05 }}
               >
-                <GlassCard hover className="p-5 flex flex-col gap-4 group relative overflow-hidden">
+                <GlassCard
+                  hover
+                  className="p-5 flex flex-col gap-4 group relative overflow-hidden cursor-pointer"
+                  onClick={() => router.push(`/habits?category=${cat.id}`)}
+                >
                   {/* Color accent bar */}
                   <div
                     className="absolute top-0 left-0 right-0 h-[2px]"
@@ -137,8 +143,11 @@ export default function CategoriesPage() {
                       <IconComponent size={22} color={cat.color} />
                     </div>
 
-                    {/* Action buttons — visible on hover */}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Action buttons — visible on hover, stop propagation so they don't navigate */}
+                    <div
+                      className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <button
                         onClick={() => openEdit(cat)}
                         className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/10"
@@ -173,6 +182,15 @@ export default function CategoriesPage() {
                     >
                       {count} habit{count !== 1 ? "s" : ""}
                     </span>
+                  </div>
+
+                  {/* View habits affordance */}
+                  <div
+                    className="flex items-center gap-1 text-[11px] font-medium transition-opacity opacity-0 group-hover:opacity-100"
+                    style={{ color: cat.color }}
+                  >
+                    <ArrowRight size={11} />
+                    View habits
                   </div>
                 </GlassCard>
               </motion.div>
