@@ -5,7 +5,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { HabitGrid } from "@/components/habits/HabitGrid";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { useHabits } from "@/hooks/useHabits";
-import { useGlobalAnalytics } from "@/hooks/useAnalytics";
+import { useHabitStore } from "@/store/habitStore";
 import { useLocalTime } from "@/hooks/useLocalTime";
 import { Flame, CheckCircle, Target, TrendingUp } from "lucide-react";
 
@@ -33,7 +33,7 @@ function motivationalCopy(pct: number): string {
 
 export default function DashboardPage() {
   const { habits, completedToday, streaks, completionRates, isLoading, toggleLog } = useHabits();
-  const { trendData } = useGlobalAnalytics();
+  const { logs } = useHabitStore();
   const { formatted } = useLocalTime();
 
   const totalHabits = habits.length;
@@ -50,19 +50,19 @@ export default function DashboardPage() {
 
   const color = ringColor(pct);
 
-  // Mon-indexed today (Mon=0 … Sun=6)
-  const todayIdx = (new Date().getDay() + 6) % 7;
+  // Build week bar using real logs for all habits (not just top-4 trendData)
+  const todayIdx = (new Date().getDay() + 6) % 7; // Mon=0 … Sun=6
+  const weekStart = new Date();
+  weekStart.setDate(weekStart.getDate() - todayIdx);
 
-  const weekDays = trendData.map((d, i) => {
-    const keys = Object.keys(d).filter((k) => k !== "day");
-    const filled = keys.reduce((s, k) => s + (d[k] as number), 0);
-    const dayPct = keys.length === 0 ? 0 : filled / keys.length;
-    return {
-      label: d.day.slice(0, 2),
-      pct: dayPct,
-      isToday: i === todayIdx,
-      isPast: i < todayIdx,
-    };
+  const DAY_LABELS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+  const weekDays = DAY_LABELS.map((label, i) => {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const done = new Set(logs.filter((l) => l.date === dateStr).map((l) => l.habitId)).size;
+    const dayPct = totalHabits === 0 ? 0 : done / totalHabits;
+    return { label, pct: dayPct, isToday: i === todayIdx, isPast: i < todayIdx };
   });
 
   const statItems = [
