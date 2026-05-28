@@ -360,22 +360,31 @@ export function NewHabitModal() {
             className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4"
           >
             <div
-              className="relative w-full max-w-lg rounded-2xl pointer-events-auto"
+              className="w-full max-w-lg rounded-2xl pointer-events-auto flex flex-col"
               style={{
                 background: "rgba(14, 9, 36, 0.96)",
                 border: "1px solid rgba(255,255,255,0.08)",
                 boxShadow: "0 32px 64px rgba(0,0,0,0.6)",
+                maxHeight: "90vh",
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close button */}
-              <button
-                onClick={close}
-                className="absolute top-4 right-4 z-10 p-1.5 rounded-lg text-white/30 hover:text-white/70 transition-colors"
-                style={{ background: "rgba(255,255,255,0.06)" }}
+              {/* Modal header — always visible, never scrolls */}
+              <div
+                className="flex items-center justify-between px-6 py-3 flex-shrink-0"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
               >
-                <X size={15} />
-              </button>
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/30">
+                  New Habit
+                </span>
+                <button
+                  onClick={close}
+                  className="p-1.5 rounded-lg text-white/30 hover:text-white/70 transition-colors"
+                  style={{ background: "rgba(255,255,255,0.06)" }}
+                >
+                  <X size={15} />
+                </button>
+              </div>
 
               <HabitForm onClose={close} />
             </div>
