@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { format } from "date-fns";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { HabitGrid } from "@/components/habits/HabitGrid";
 import { ProgressRing } from "@/components/ui/ProgressRing";
@@ -59,7 +60,7 @@ export default function DashboardPage() {
   const weekDays = DAY_LABELS.map((label, i) => {
     const d = new Date(weekStart);
     d.setDate(weekStart.getDate() + i);
-    const dateStr = d.toISOString().slice(0, 10);
+    const dateStr = format(d, "yyyy-MM-dd");
     const done = new Set(logs.filter((l) => l.date === dateStr).map((l) => l.habitId)).size;
     const dayPct = totalHabits === 0 ? 0 : done / totalHabits;
     return { label, pct: dayPct, isToday: i === todayIdx, isPast: i < todayIdx };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { format, startOfWeek, addDays, parseISO } from "date-fns";
 import { HeatMapCell } from "./HeatMapCell";
 import type { HeatMapDay } from "@/types";
@@ -19,6 +20,9 @@ export function HeatMap({ days, color = "#7C3AED", cellSize = 12, gap = 3 }: Hea
   const scrollRef = useRef<HTMLDivElement>(null);
   const stride = cellSize + gap;
   const [tooltip, setTooltip] = useState<{ day: HeatMapDay; x: number; y: number } | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const handleHover = (day: HeatMapDay | null, clientX: number, clientY: number) => {
     setTooltip(day ? { day, x: clientX, y: clientY } : null);
@@ -136,20 +140,21 @@ export function HeatMap({ days, color = "#7C3AED", cellSize = 12, gap = 3 }: Hea
         </div>
       </div>
 
-      {/* Floating tooltip — fixed to viewport so it's never clipped by overflow */}
-      {tooltip && (
+      {/* Floating tooltip — rendered in document.body via portal to escape CSS transform ancestors */}
+      {mounted && tooltip && createPortal(
         <div
-          className="fixed z-50 pointer-events-none px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap"
+          className="fixed z-[9999] pointer-events-none px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap"
           style={{
-            left: tooltip.x + 14,
-            top: tooltip.y - 44,
+            left: tooltip.x,
+            top: tooltip.y - 48,
+            transform: "translateX(-50%)",
             background: "rgba(14,9,36,0.97)",
             border: "1px solid rgba(255,255,255,0.12)",
             boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
           }}
         >
           <span className="text-white/45 mr-2">
-            {format(parseISO(tooltip.day.date), "EEE, MMM d yyyy")}
+            {format(parseISO(tooltip.day.date), "EEE, MMM d, yyyy")}
           </span>
           {tooltip.day.count === 0 ? (
             <span className="text-white/25">No completions</span>
@@ -158,7 +163,8 @@ export function HeatMap({ days, color = "#7C3AED", cellSize = 12, gap = 3 }: Hea
               {tooltip.day.count} completion{tooltip.day.count !== 1 ? "s" : ""}
             </span>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -21,7 +21,7 @@ export function TopBar() {
 
   return (
     <header
-      className="h-16 flex items-center justify-between px-6 sticky top-0 z-30"
+      className="h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30"
       style={{
         background: "rgba(8, 5, 22, 0.88)",
         backdropFilter: "blur(20px)",

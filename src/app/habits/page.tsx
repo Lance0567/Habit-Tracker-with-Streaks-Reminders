@@ -2,16 +2,19 @@
 
 import { useState, Suspense } from "react";
 import { motion } from "framer-motion";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, LayoutGrid, List } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { clsx } from "clsx";
 import { GlassButton } from "@/components/ui/GlassButton";
 import { GlassInput } from "@/components/ui/GlassInput";
 import { HabitGrid } from "@/components/habits/HabitGrid";
+import { HabitList } from "@/components/habits/HabitList";
 import { CategoryFilter } from "@/components/categories/CategoryFilter";
 import { Spinner } from "@/components/ui/Spinner";
 import { useHabits } from "@/hooks/useHabits";
 import { useCategories } from "@/hooks/useCategories";
 import { useUIStore } from "@/store/uiStore";
+import { useHabitStore } from "@/store/habitStore";
 
 // Inner component reads URL search params (requires Suspense boundary)
 function HabitsContent() {
@@ -19,10 +22,16 @@ function HabitsContent() {
   const { habits, completedToday, streaks, completionRates, isLoading, toggleLog } = useHabits();
   const { categories } = useCategories();
   const setNewHabitOpen = useUIStore((s) => s.setNewHabitOpen);
+  const { settings, updateSettings } = useHabitStore();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     searchParams.get("category")
   );
+  const view = settings?.defaultView ?? "grid";
+
+  const handleSetView = (v: "grid" | "list") => {
+    if (settings) updateSettings({ ...settings, defaultView: v });
+  };
 
   const filtered = habits.filter((h) => {
     const matchSearch = h.name.toLowerCase().includes(search.toLowerCase());
@@ -49,10 +58,35 @@ function HabitsContent() {
           <h2 className="text-2xl font-bold text-white/90">All Habits</h2>
           <p className="text-sm text-white/35 mt-0.5">{habits.length} habits tracked</p>
         </div>
-        <GlassButton variant="primary" onClick={() => setNewHabitOpen(true)}>
-          <Plus size={16} />
-          New Habit
-        </GlassButton>
+        <div className="flex items-center gap-2">
+          {/* Grid / List toggle */}
+          <div className="flex glass rounded-lg border border-white/8 overflow-hidden">
+            <button
+              onClick={() => handleSetView("grid")}
+              className={clsx(
+                "p-2 transition-colors",
+                view === "grid" ? "bg-accent/20 text-accent-light" : "text-white/35 hover:text-white/60"
+              )}
+              aria-label="Grid view"
+            >
+              <LayoutGrid size={15} />
+            </button>
+            <button
+              onClick={() => handleSetView("list")}
+              className={clsx(
+                "p-2 transition-colors",
+                view === "list" ? "bg-accent/20 text-accent-light" : "text-white/35 hover:text-white/60"
+              )}
+              aria-label="List view"
+            >
+              <List size={15} />
+            </button>
+          </div>
+          <GlassButton variant="primary" onClick={() => setNewHabitOpen(true)}>
+            <Plus size={16} />
+            New Habit
+          </GlassButton>
+        </div>
       </motion.div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -71,13 +105,23 @@ function HabitsContent() {
         />
       </div>
 
-      <HabitGrid
-        habits={filtered}
-        completedToday={completedToday}
-        streaks={streaks}
-        completionRates={completionRates}
-        onToggle={toggleLog}
-      />
+      {view === "grid" ? (
+        <HabitGrid
+          habits={filtered}
+          completedToday={completedToday}
+          streaks={streaks}
+          completionRates={completionRates}
+          onToggle={toggleLog}
+        />
+      ) : (
+        <HabitList
+          habits={filtered}
+          completedToday={completedToday}
+          streaks={streaks}
+          completionRates={completionRates}
+          onToggle={toggleLog}
+        />
+      )}
     </div>
   );
 }

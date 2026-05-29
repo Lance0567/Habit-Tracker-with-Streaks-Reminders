@@ -26,6 +26,7 @@ export function HabitCard({
   onToggle,
 }: HabitCardProps) {
   const [checked, setChecked] = useState(completedToday);
+  const [cardHovered, setCardHovered] = useState(false);
   const IconComponent = getIcon(habit.icon);
 
   const handleToggle = () => {
@@ -40,6 +41,8 @@ export function HabitCard({
       style={{
         borderColor: checked ? `${habit.color}30` : undefined,
       }}
+      onMouseEnter={() => setCardHovered(true)}
+      onMouseLeave={() => setCardHovered(false)}
     >
       {/* Color accent bar */}
       <div
@@ -53,7 +56,7 @@ export function HabitCard({
 
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{
@@ -100,6 +103,7 @@ export function HabitCard({
           onToggle={handleToggle}
           color={habit.color}
           size={44}
+          cardHovered={cardHovered}
         />
       </div>
 

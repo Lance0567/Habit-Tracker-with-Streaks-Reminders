@@ -8,6 +8,7 @@ interface CheckInButtonProps {
   onToggle: () => void;
   color?: string;
   size?: number;
+  cardHovered?: boolean;
 }
 
 export function CheckInButton({
@@ -15,13 +16,20 @@ export function CheckInButton({
   onToggle,
   color = "#7C3AED",
   size = 48,
+  cardHovered = false,
 }: CheckInButtonProps) {
   return (
     <motion.button
       onClick={onToggle}
       className="relative flex items-center justify-center rounded-full cursor-pointer focus:outline-none"
       style={{ width: size, height: size }}
-      animate={{ filter: checked ? `drop-shadow(0 0 10px ${color})` : "none" }}
+      animate={{
+        filter: checked
+          ? `drop-shadow(0 0 10px ${color})`
+          : cardHovered
+          ? `drop-shadow(0 0 8px ${color}80)`
+          : "none",
+      }}
       transition={{ duration: 0.3 }}
       whileHover={{ scale: 1.08 }}
       whileTap={{ scale: 0.92 }}
@@ -39,7 +47,7 @@ export function CheckInButton({
           cy={size / 2}
           r={(size - 4) / 2}
           fill="none"
-          stroke={checked ? color : "rgba(255,255,255,0.12)"}
+          stroke={checked ? color : cardHovered ? `${color}80` : "rgba(255,255,255,0.12)"}
           strokeWidth={2.5}
           strokeLinecap="round"
           strokeDasharray={Math.PI * (size - 4)}
@@ -55,7 +63,7 @@ export function CheckInButton({
       <motion.div
         className="absolute inset-1 rounded-full"
         animate={{
-          backgroundColor: checked ? color : "rgba(255,255,255,0.04)",
+          backgroundColor: checked ? color : cardHovered ? `${color}18` : "rgba(255,255,255,0.04)",
         }}
         transition={{ duration: 0.3 }}
       />
