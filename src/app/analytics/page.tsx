@@ -1,12 +1,26 @@
 "use client";
 
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Spinner } from "@/components/ui/Spinner";
-import { CompletionRateChart } from "@/components/charts/CompletionRateChart";
-import { StreakHistoryChart } from "@/components/charts/StreakHistoryChart";
-import { CategoryBreakdown } from "@/components/charts/CategoryBreakdown";
-import { TrendLineChart } from "@/components/charts/TrendLineChart";
+
+const CompletionRateChart = dynamic(
+  () => import("@/components/charts/CompletionRateChart").then((m) => ({ default: m.CompletionRateChart })),
+  { ssr: false, loading: () => <div className="skeleton rounded-lg h-48" /> }
+);
+const StreakHistoryChart = dynamic(
+  () => import("@/components/charts/StreakHistoryChart").then((m) => ({ default: m.StreakHistoryChart })),
+  { ssr: false, loading: () => <div className="skeleton rounded-lg h-48" /> }
+);
+const CategoryBreakdown = dynamic(
+  () => import("@/components/charts/CategoryBreakdown").then((m) => ({ default: m.CategoryBreakdown })),
+  { ssr: false, loading: () => <div className="skeleton rounded-lg h-48" /> }
+);
+const TrendLineChart = dynamic(
+  () => import("@/components/charts/TrendLineChart").then((m) => ({ default: m.TrendLineChart })),
+  { ssr: false, loading: () => <div className="skeleton rounded-lg h-48" /> }
+);
 import { useGlobalAnalytics } from "@/hooks/useAnalytics";
 import { useHabitStore } from "@/store/habitStore";
 import { HABIT_COLORS } from "@/lib/constants";

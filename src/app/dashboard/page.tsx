@@ -26,10 +26,10 @@ function ringColor(pct: number): string {
 }
 
 function motivationalCopy(pct: number): string {
-  if (pct === 0) return "Ready to build momentum?";
-  if (pct < 0.5) return "Great start — keep going.";
-  if (pct < 1) return "Almost there — finish strong.";
-  return "Mission complete. Outstanding.";
+  if (pct === 0) return "Ready to check in?";
+  if (pct < 0.5) return "Good progress — keep it up.";
+  if (pct < 1) return "Almost done for today.";
+  return "All done for today.";
 }
 
 export default function DashboardPage() {
@@ -126,7 +126,7 @@ export default function DashboardPage() {
                 {formatted}
               </p>
               <h1 className="text-3xl font-black tracking-tight mb-2" style={{ color: "var(--text-primary)" }}>
-                Today&apos;s Mission
+                Today&apos;s Habits
               </h1>
               <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>{motivationalCopy(pct)}</p>
               <span

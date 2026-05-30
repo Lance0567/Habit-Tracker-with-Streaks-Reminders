@@ -45,7 +45,7 @@ export function TopBar() {
           {format(today, "EEEE, MMMM d")}
         </p>
         <h1 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-          {getGreeting()}, Habit Architect
+          {getGreeting()}
         </h1>
       </div>
 

@@ -9,11 +9,14 @@ import { TopBar } from "@/components/layout/TopBar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { StoreProvider } from "@/components/layout/StoreProvider";
+import { ToastContainer } from "@/components/ui/GlassToast";
 import { useUIStore } from "@/store/uiStore";
 
 function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const collapsed = useUIStore((s) => s.sidebarCollapsed);
+  const toasts = useUIStore((s) => s.toasts);
+  const removeToast = useUIStore((s) => s.removeToast);
 
   const isAppRoute =
     pathname.startsWith("/dashboard") ||
@@ -41,6 +44,7 @@ function LayoutShell({ children }: { children: React.ReactNode }) {
         </main>
         <BottomNav />
       </div>
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </div>
   );
 }
