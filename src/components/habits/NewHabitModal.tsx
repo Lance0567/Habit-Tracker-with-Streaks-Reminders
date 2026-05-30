@@ -28,9 +28,16 @@ const FREQ_OPTIONS: { value: HabitFrequency; icon: LucideIcon; label: string; su
 
 const CUSTOM_DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
+const COLOR_NAMES: Record<string, string> = {
+  "#7C3AED": "Purple", "#06B6D4": "Cyan",   "#10B981": "Emerald", "#F59E0B": "Amber",
+  "#F43F5E": "Rose",   "#EC4899": "Pink",   "#3B82F6": "Blue",    "#F97316": "Orange",
+  "#8B5CF6": "Violet", "#14B8A6": "Teal",   "#84CC16": "Lime",    "#EF4444": "Red",
+};
+
 function HabitForm({ onClose }: { onClose: () => void }) {
   const { categories } = useCategories();
   const { addHabit } = useHabitStore();
+  const addToast = useUIStore((s) => s.addToast);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -46,25 +53,31 @@ function HabitForm({ onClose }: { onClose: () => void }) {
   const handleCreate = async () => {
     if (!name.trim()) return;
     setSaving(true);
-    const now = new Date().toISOString();
-    const habit: Habit = {
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      description: description.trim(),
-      categoryId,
-      icon: "Star",
-      color,
-      frequency,
-      customDays: frequency === "custom" ? customDays : undefined,
-      targetCount: 1,
-      unit: "times",
-      reminders,
-      archived: false,
-      createdAt: now,
-      updatedAt: now,
-    };
-    await addHabit(habit);
-    onClose();
+    try {
+      const now = new Date().toISOString();
+      const habit: Habit = {
+        id: crypto.randomUUID(),
+        name: name.trim(),
+        description: description.trim(),
+        categoryId,
+        icon: "Star",
+        color,
+        frequency,
+        customDays: frequency === "custom" ? customDays : undefined,
+        targetCount: 1,
+        unit: "times",
+        reminders,
+        archived: false,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await addHabit(habit);
+      addToast(`"${habit.name}" added`, "success");
+      onClose();
+    } catch {
+      addToast("Failed to save habit. Please try again.", "error");
+      setSaving(false);
+    }
   };
 
   const toggleCustomDay = (idx: number) => {
@@ -160,13 +173,15 @@ function HabitForm({ onClose }: { onClose: () => void }) {
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--text-muted)" }}>Color</p>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Habit colour">
             {HABIT_COLORS.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setColor(c)}
-                className="rounded-full transition-all duration-200"
+                aria-label={COLOR_NAMES[c] ?? c}
+                aria-pressed={color === c}
+                className="rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-1"
                 style={{
                   aspectRatio: "1",
                   backgroundColor: c,
