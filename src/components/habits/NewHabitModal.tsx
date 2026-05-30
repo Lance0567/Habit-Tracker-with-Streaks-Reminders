@@ -91,12 +91,21 @@ function HabitForm({ onClose }: { onClose: () => void }) {
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && name.trim() && handleCreate()}
             placeholder="Name this habit..."
+            maxLength={50}
             className="w-full bg-transparent border-none outline-none text-3xl font-black tracking-tight"
             style={{
-              color: name ? color : "rgba(255,255,255,0.15)",
+              color: name ? color : "var(--text-muted)",
               caretColor: color,
             }}
           />
+          {name.length > 35 && (
+            <span
+              className="absolute right-0 bottom-3 text-[10px] font-mono"
+              style={{ color: name.length >= 50 ? "#F43F5E" : "var(--text-muted)" }}
+            >
+              {name.length}/50
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
@@ -112,7 +121,10 @@ function HabitForm({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={() => setShowDesc((v) => !v)}
-            className="text-xs text-white/25 hover:text-white/55 transition-colors"
+            className="text-xs transition-colors"
+            style={{ color: "var(--text-muted)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
           >
             {showDesc ? "− description" : "+ description"}
           </button>
@@ -132,8 +144,12 @@ function HabitForm({ onClose }: { onClose: () => void }) {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What does this habit mean to you?"
                 rows={2}
-                className="w-full rounded-lg p-3 text-sm text-white/70 placeholder:text-white/20 outline-none resize-none transition-colors mt-1"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}
+                className="w-full rounded-lg p-3 text-sm outline-none resize-none transition-colors mt-1"
+                style={{
+                  background: "var(--glass-bg-subtle)",
+                  border: "1px solid var(--glass-border)",
+                  color: "var(--text-primary)",
+                }}
               />
             </motion.div>
           )}
@@ -143,7 +159,7 @@ function HabitForm({ onClose }: { onClose: () => void }) {
       {/* Zone 2: Color & Category */}
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/30">Color</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--text-muted)" }}>Color</p>
           <div className="grid grid-cols-4 gap-2">
             {HABIT_COLORS.map((c) => (
               <button
@@ -165,7 +181,7 @@ function HabitForm({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/30">Category</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--text-muted)" }}>Category</p>
           <div className="flex flex-wrap gap-1.5">
             {categories.map((cat) => {
               const isSelected = categoryId === cat.id;
@@ -175,11 +191,11 @@ function HabitForm({ onClose }: { onClose: () => void }) {
                   type="button"
                   onClick={() => setCategoryId(isSelected ? null : cat.id)}
                   className="text-xs px-2.5 py-1 rounded-full transition-all duration-200 font-medium"
-                  style={{
-                    background: isSelected ? `${cat.color}22` : "rgba(255,255,255,0.06)",
-                    border: `1px solid ${isSelected ? cat.color : "rgba(255,255,255,0.10)"}`,
-                    color: isSelected ? cat.color : "rgba(255,255,255,0.45)",
-                  }}
+                  style={
+                    isSelected
+                      ? { background: `${cat.color}22`, border: `1px solid ${cat.color}`, color: cat.color }
+                      : { background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)", color: "var(--text-secondary)" }
+                  }
                 >
                   {cat.name}
                 </button>
@@ -191,7 +207,7 @@ function HabitForm({ onClose }: { onClose: () => void }) {
 
       {/* Zone 3: Frequency */}
       <div className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/30">Frequency</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--text-muted)" }}>Frequency</p>
         <div className="grid grid-cols-4 gap-2">
           {FREQ_OPTIONS.map(({ value, icon: Icon, label, sub }) => {
             const isSelected = frequency === value;
@@ -202,20 +218,20 @@ function HabitForm({ onClose }: { onClose: () => void }) {
                 onClick={() => setFrequency(value)}
                 className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 text-center"
                 style={{
-                  background: isSelected ? `${color}18` : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${isSelected ? color : "rgba(255,255,255,0.08)"}`,
+                  background: isSelected ? `${color}18` : "var(--glass-bg-subtle)",
+                  border: `1px solid ${isSelected ? color : "var(--glass-border)"}`,
                 }}
               >
-                <Icon size={18} style={{ color: isSelected ? color : "rgba(255,255,255,0.35)" }} />
+                <Icon size={18} style={{ color: isSelected ? color : "var(--text-muted)" }} />
                 <span
                   className="text-xs font-semibold leading-none"
-                  style={{ color: isSelected ? "rgba(255,255,255,0.90)" : "rgba(255,255,255,0.45)" }}
+                  style={{ color: isSelected ? "var(--text-primary)" : "var(--text-secondary)" }}
                 >
                   {label}
                 </span>
                 <span
                   className="text-[10px] leading-none"
-                  style={{ color: isSelected ? `${color}cc` : "rgba(255,255,255,0.22)" }}
+                  style={{ color: isSelected ? `${color}cc` : "var(--text-muted)" }}
                 >
                   {sub}
                 </span>
@@ -243,9 +259,9 @@ function HabitForm({ onClose }: { onClose: () => void }) {
                       onClick={() => toggleCustomDay(idx)}
                       className="flex-1 py-2 rounded-lg text-xs font-bold transition-all duration-200"
                       style={{
-                        background: isOn ? `${color}30` : "rgba(255,255,255,0.05)",
-                        border: `1px solid ${isOn ? color : "rgba(255,255,255,0.08)"}`,
-                        color: isOn ? color : "rgba(255,255,255,0.28)",
+                        background: isOn ? `${color}30` : "var(--glass-bg-subtle)",
+                        border: `1px solid ${isOn ? color : "var(--glass-border)"}`,
+                        color: isOn ? color : "var(--text-muted)",
                       }}
                     >
                       {label}
@@ -266,8 +282,11 @@ function HabitForm({ onClose }: { onClose: () => void }) {
           className="flex items-center justify-between w-full group"
         >
           <div className="flex items-center gap-2">
-            <Bell size={13} className="text-white/30 group-hover:text-white/55 transition-colors" />
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/30 group-hover:text-white/55 transition-colors">
+            <Bell size={13} style={{ color: "var(--text-muted)" }} className="group-hover:opacity-80 transition-opacity" />
+            <span
+              className="text-xs font-semibold uppercase tracking-[0.2em] group-hover:opacity-80 transition-opacity"
+              style={{ color: "var(--text-muted)" }}
+            >
               Reminders
             </span>
             {reminders.length > 0 && (
@@ -280,7 +299,7 @@ function HabitForm({ onClose }: { onClose: () => void }) {
             )}
           </div>
           <motion.div animate={{ rotate: showReminders ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={14} className="text-white/25" />
+            <ChevronDown size={14} style={{ color: "var(--text-muted)" }} />
           </motion.div>
         </button>
 
@@ -306,24 +325,42 @@ function HabitForm({ onClose }: { onClose: () => void }) {
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 py-3 rounded-xl text-sm font-semibold text-white/40 hover:text-white/70 transition-colors"
-          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+          className="flex-1 py-3 rounded-xl text-sm font-semibold transition-colors"
+          style={{
+            background: "var(--glass-bg-subtle)",
+            border: "1px solid var(--glass-border)",
+            color: "var(--text-secondary)",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
         >
           Cancel
         </button>
-        <motion.button
+        <button
           type="button"
           onClick={handleCreate}
           disabled={!name.trim() || saving}
-          animate={{
-            background: name.trim() ? color : "rgba(255,255,255,0.08)",
-            filter: name.trim() ? `drop-shadow(0 4px 16px ${color}55)` : "none",
-          }}
-          transition={{ duration: 0.3 }}
-          className="flex-1 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex-1 py-3 rounded-xl text-sm font-bold transition-all duration-300 disabled:cursor-not-allowed"
+          style={
+            name.trim()
+              ? {
+                  background: color,
+                  color: "#ffffff",
+                  boxShadow: `0 4px 16px ${color}55`,
+                  border: "1px solid transparent",
+                  opacity: saving ? 0.65 : 1,
+                }
+              : {
+                  background: "var(--glass-bg-default)",
+                  color: "var(--text-muted)",
+                  border: "1px solid var(--glass-border-hover)",
+                  boxShadow: "none",
+                  opacity: 1,
+                }
+          }
         >
           {saving ? "Creating…" : "Create Habit"}
-        </motion.button>
+        </button>
       </div>
     </div>
   );
@@ -346,7 +383,7 @@ export function NewHabitModal() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50"
-            style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)" }}
+            style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }}
             onClick={close}
           />
 
@@ -362,9 +399,11 @@ export function NewHabitModal() {
             <div
               className="w-full max-w-lg rounded-2xl pointer-events-auto flex flex-col"
               style={{
-                background: "rgba(14, 9, 36, 0.96)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                boxShadow: "0 32px 64px rgba(0,0,0,0.6)",
+                background: "var(--glass-bg-elevated)",
+                backdropFilter: "blur(32px)",
+                WebkitBackdropFilter: "blur(32px)",
+                border: "1px solid var(--glass-border)",
+                boxShadow: "0 32px 64px rgba(0,0,0,0.4)",
                 maxHeight: "90vh",
               }}
               onClick={(e) => e.stopPropagation()}
@@ -372,15 +411,17 @@ export function NewHabitModal() {
               {/* Modal header — always visible, never scrolls */}
               <div
                 className="flex items-center justify-between px-6 py-3 flex-shrink-0"
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                style={{ borderBottom: "1px solid var(--divider)" }}
               >
-                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/30">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--text-muted)" }}>
                   New Habit
                 </span>
                 <button
                   onClick={close}
-                  className="p-1.5 rounded-lg text-white/30 hover:text-white/70 transition-colors"
-                  style={{ background: "rgba(255,255,255,0.06)" }}
+                  className="p-1.5 rounded-lg transition-colors"
+                  style={{ background: "var(--glass-bg-subtle)", color: "var(--text-muted)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
                 >
                   <X size={15} />
                 </button>

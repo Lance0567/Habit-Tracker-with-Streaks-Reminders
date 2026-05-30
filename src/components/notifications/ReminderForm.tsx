@@ -1,7 +1,6 @@
 "use client";
 
 import { Plus, Trash2, Clock } from "lucide-react";
-import { GlassButton } from "@/components/ui/GlassButton";
 import { GlassInput } from "@/components/ui/GlassInput";
 import type { Reminder } from "@/types";
 
@@ -46,26 +45,57 @@ export function ReminderForm({ reminders, onChange }: Props) {
 
   return (
     <div className="space-y-3">
+      {/* Header row */}
       <div className="flex items-center justify-between">
-        <label className="text-xs font-medium text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+        <label
+          className="text-xs font-semibold uppercase tracking-[0.2em] flex items-center gap-1.5"
+          style={{ color: "var(--text-muted)" }}
+        >
           <Clock size={11} /> Reminders
         </label>
-        <GlassButton variant="ghost" size="sm" onClick={addReminder} type="button">
-          <Plus size={12} /> Add
-        </GlassButton>
+        <button
+          type="button"
+          onClick={addReminder}
+          className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all duration-150 focus:outline-none"
+          style={{
+            background: "var(--glass-bg-subtle)",
+            border: "1px solid var(--glass-border-hover)",
+            color: "var(--text-secondary)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "var(--color-accent-light)";
+            e.currentTarget.style.borderColor = "var(--color-accent)";
+            e.currentTarget.style.background = "rgba(124,58,237,0.10)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "var(--text-secondary)";
+            e.currentTarget.style.borderColor = "var(--glass-border-hover)";
+            e.currentTarget.style.background = "var(--glass-bg-subtle)";
+          }}
+        >
+          <Plus size={11} /> Add
+        </button>
       </div>
 
+      {/* Empty state */}
       {reminders.length === 0 && (
-        <p className="text-xs text-white/25 text-center py-3">No reminders set</p>
+        <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>
+          No reminders set
+        </p>
       )}
 
+      {/* Reminder rows */}
       {reminders.map((r) => (
         <div
           key={r.id}
-          className={`glass rounded-[var(--radius-md)] p-3 space-y-2.5 border transition-opacity ${
-            r.enabled ? "border-white/10" : "border-white/5 opacity-60"
-          }`}
+          className="rounded-[var(--radius-md)] p-3 space-y-2.5 transition-all duration-200"
+          style={{
+            background: "var(--glass-bg-subtle)",
+            border: `1px solid ${r.enabled ? "var(--glass-border-hover)" : "var(--glass-border)"}`,
+            opacity: r.enabled ? 1 : 0.6,
+          }}
         >
+          {/* Time + on/off + delete */}
           <div className="flex items-center gap-2">
             <GlassInput
               type="time"
@@ -76,40 +106,67 @@ export function ReminderForm({ reminders, onChange }: Props) {
             <button
               type="button"
               onClick={() => toggleEnabled(r.id)}
-              className={`text-xs px-2.5 py-1 rounded-md border transition-all ${
+              className="text-xs px-2.5 py-1 rounded-md font-semibold transition-all duration-150 focus:outline-none flex-shrink-0"
+              style={
                 r.enabled
-                  ? "border-accent/40 text-accent bg-accent/10"
-                  : "border-white/10 text-white/35"
-              }`}
+                  ? {
+                      background: "rgba(124,58,237,0.15)",
+                      border: "1px solid rgba(124,58,237,0.40)",
+                      color: "var(--color-accent-light)",
+                    }
+                  : {
+                      background: "var(--glass-bg-default)",
+                      border: "1px solid var(--glass-border)",
+                      color: "var(--text-muted)",
+                    }
+              }
             >
               {r.enabled ? "On" : "Off"}
             </button>
             <button
               type="button"
               onClick={() => remove(r.id)}
-              className="text-danger/60 hover:text-danger transition-colors p-1"
+              className="p-1.5 rounded-lg transition-colors focus:outline-none flex-shrink-0"
+              style={{ color: "var(--text-muted)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#F43F5E")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
             >
               <Trash2 size={14} />
             </button>
           </div>
 
+          {/* Day pills */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            {DAY_LABELS.map((label, dow) => (
-              <button
-                key={dow}
-                type="button"
-                onClick={() => toggleDay(r.id, dow)}
-                className={`w-8 h-7 rounded-md text-[10px] font-medium transition-all border ${
-                  r.days.includes(dow)
-                    ? "bg-accent/20 border-accent/40 text-accent"
-                    : "border-white/10 text-white/30 hover:border-white/20 hover:text-white/50"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+            {DAY_LABELS.map((label, dow) => {
+              const isOn = r.days.includes(dow);
+              return (
+                <button
+                  key={dow}
+                  type="button"
+                  onClick={() => toggleDay(r.id, dow)}
+                  className="w-8 h-7 rounded-md text-[10px] font-medium transition-all duration-150 focus:outline-none"
+                  style={
+                    isOn
+                      ? {
+                          background: "rgba(124,58,237,0.18)",
+                          border: "1px solid rgba(124,58,237,0.45)",
+                          color: "var(--color-accent-light)",
+                        }
+                      : {
+                          background: "var(--glass-bg-default)",
+                          border: "1px solid var(--glass-border)",
+                          color: "var(--text-muted)",
+                        }
+                  }
+                >
+                  {label}
+                </button>
+              );
+            })}
             {r.days.length === 0 && (
-              <span className="text-[10px] text-white/25 ml-1">Every day</span>
+              <span className="text-[10px] ml-1" style={{ color: "var(--text-muted)" }}>
+                Every day
+              </span>
             )}
           </div>
         </div>

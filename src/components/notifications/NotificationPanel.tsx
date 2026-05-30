@@ -12,21 +12,12 @@ interface Props {
   onClose: () => void;
 }
 
-const PANEL_STYLE = {
-  background: "rgba(8, 5, 22, 0.96)",
-  backdropFilter: "blur(32px)",
-  WebkitBackdropFilter: "blur(32px)",
-  border: "1px solid rgba(124, 58, 237, 0.25)",
-  boxShadow:
-    "0 24px 64px rgba(0,0,0,0.75), 0 0 0 1px rgba(124,58,237,0.07), inset 0 1px 0 rgba(255,255,255,0.05)",
-};
-
 export function NotificationPanel({ open, onClose }: Props) {
-  const habits = useHabitStore((s) => s.habits);
-  const settings = useHabitStore((s) => s.settings);
+  const habits        = useHabitStore((s) => s.habits);
+  const settings      = useHabitStore((s) => s.settings);
   const updateSettings = useHabitStore((s) => s.updateSettings);
 
-  const todayDow = new Date().getDay();
+  const todayDow      = new Date().getDay();
   const notificationsOn = settings?.notificationsEnabled ?? false;
 
   const upcoming = habits
@@ -55,17 +46,29 @@ export function NotificationPanel({ open, onClose }: Props) {
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="absolute top-12 right-0 z-50 w-[300px]"
           >
-            <div className="overflow-hidden rounded-[var(--radius-lg)]" style={PANEL_STYLE}>
-
+            <div
+              className="overflow-hidden rounded-[var(--radius-lg)]"
+              style={{
+                background: "var(--glass-bg-elevated)",
+                backdropFilter: "blur(32px)",
+                WebkitBackdropFilter: "blur(32px)",
+                border: "1px solid var(--glass-border)",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.25), 0 0 0 1px var(--divider)",
+              }}
+            >
               {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3.5"
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+              <div
+                className="flex items-center justify-between px-4 py-3.5"
+                style={{ borderBottom: "1px solid var(--divider)" }}
+              >
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-                    style={{ background: "rgba(124,58,237,0.18)", color: "#A78BFA" }}>
-                    <Bell size={12} />
+                  <div
+                    className="w-6 h-6 rounded-lg flex items-center justify-center"
+                    style={{ background: "var(--color-accent)/18", color: "var(--color-accent-light)" }}
+                  >
+                    <Bell size={12} style={{ color: "var(--color-accent-light)" }} />
                   </div>
-                  <span className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>
+                  <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
                     Reminders
                   </span>
                 </div>
@@ -75,11 +78,19 @@ export function NotificationPanel({ open, onClose }: Props) {
                   <button
                     onClick={toggleNotifications}
                     className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
-                    style={{
-                      background: notificationsOn ? "rgba(124,58,237,0.2)" : "rgba(255,255,255,0.06)",
-                      border: `1px solid ${notificationsOn ? "rgba(124,58,237,0.4)" : "rgba(255,255,255,0.1)"}`,
-                      color: notificationsOn ? "#A78BFA" : "rgba(255,255,255,0.35)",
-                    }}
+                    style={
+                      notificationsOn
+                        ? {
+                            background: "rgba(124,58,237,0.15)",
+                            border: "1px solid rgba(124,58,237,0.35)",
+                            color: "var(--color-accent-light)",
+                          }
+                        : {
+                            background: "var(--glass-bg-subtle)",
+                            border: "1px solid var(--glass-border)",
+                            color: "var(--text-muted)",
+                          }
+                    }
                   >
                     {notificationsOn ? <Bell size={10} /> : <BellOff size={10} />}
                     {notificationsOn ? "On" : "Off"}
@@ -87,8 +98,10 @@ export function NotificationPanel({ open, onClose }: Props) {
 
                   <button
                     onClick={onClose}
-                    className="w-6 h-6 flex items-center justify-center rounded-md transition-colors hover:bg-white/10"
-                    style={{ color: "rgba(255,255,255,0.3)" }}
+                    className="w-6 h-6 flex items-center justify-center rounded-md transition-colors"
+                    style={{ color: "var(--text-muted)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
                   >
                     <X size={13} />
                   </button>
@@ -97,29 +110,34 @@ export function NotificationPanel({ open, onClose }: Props) {
 
               {/* Body */}
               {upcoming.length === 0 ? (
-                /* ── Empty state ── */
+                /* Empty state */
                 <div className="px-4 py-7 flex flex-col items-center gap-3">
-                  {/* Icon with glow ring */}
                   <div className="relative">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center"
                       style={{
-                        background: "rgba(124,58,237,0.12)",
-                        border: "1px solid rgba(124,58,237,0.2)",
-                        boxShadow: "0 0 20px rgba(124,58,237,0.15)",
-                      }}>
-                      <Bell size={20} style={{ color: "rgba(167,139,250,0.6)" }} />
+                        background: "var(--glass-bg-subtle)",
+                        border: "1px solid var(--glass-border)",
+                      }}
+                    >
+                      <Bell size={20} style={{ color: "var(--color-accent-light)", opacity: 0.7 }} />
                     </div>
-                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center"
-                      style={{ background: "rgba(124,58,237,0.25)", border: "1px solid rgba(124,58,237,0.4)" }}>
-                      <span style={{ fontSize: 8, color: "#A78BFA", fontWeight: 700 }}>0</span>
+                    <div
+                      className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center"
+                      style={{
+                        background: "var(--color-accent)",
+                        border: "2px solid var(--glass-bg-elevated)",
+                      }}
+                    >
+                      <span style={{ fontSize: 7, color: "#fff", fontWeight: 700 }}>0</span>
                     </div>
                   </div>
 
                   <div className="text-center">
-                    <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.75)" }}>
+                    <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
                       No reminders for today
                     </p>
-                    <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
+                    <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
                       Add a reminder by editing any habit
                     </p>
                   </div>
@@ -127,18 +145,17 @@ export function NotificationPanel({ open, onClose }: Props) {
                   <Link
                     href="/habits"
                     onClick={onClose}
-                    className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all hover:opacity-80"
+                    className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg transition-all hover:opacity-80"
                     style={{
-                      background: "rgba(124,58,237,0.15)",
-                      border: "1px solid rgba(124,58,237,0.25)",
-                      color: "#A78BFA",
+                      background: "var(--color-accent)",
+                      color: "#fff",
                     }}
                   >
                     Go to Habits <ArrowRight size={11} />
                   </Link>
                 </div>
               ) : (
-                /* ── Reminder list ── */
+                /* Reminder list */
                 <ul className="py-1.5 max-h-64 overflow-y-auto">
                   {upcoming.map(({ habit, reminder }) => {
                     const Icon = getIcon(habit.icon);
@@ -152,21 +169,31 @@ export function NotificationPanel({ open, onClose }: Props) {
                         key={`${habit.id}:${reminder.id}`}
                         className="flex items-center gap-3 px-4 py-2.5 transition-colors"
                         style={{
-                          opacity: isPast ? 0.4 : 1,
-                          borderBottom: "1px solid rgba(255,255,255,0.04)",
+                          opacity: isPast ? 0.5 : 1,
+                          borderBottom: "1px solid var(--divider)",
                         }}
                       >
                         <span
                           className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                          style={{ background: `${habit.color}18`, border: `1px solid ${habit.color}30`, color: habit.color }}
+                          style={{
+                            background: `${habit.color}18`,
+                            border: `1px solid ${habit.color}30`,
+                            color: habit.color,
+                          }}
                         >
                           <Icon size={15} />
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium truncate" style={{ color: "rgba(255,255,255,0.85)" }}>
+                          <p
+                            className="text-xs font-medium truncate"
+                            style={{ color: "var(--text-primary)" }}
+                          >
                             {habit.name}
                           </p>
-                          <p className="flex items-center gap-1 mt-0.5" style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>
+                          <p
+                            className="flex items-center gap-1 mt-0.5"
+                            style={{ fontSize: 10, color: "var(--text-muted)" }}
+                          >
                             <Clock size={9} />
                             {format(fireDate, "h:mm a")}
                           </p>
@@ -174,11 +201,19 @@ export function NotificationPanel({ open, onClose }: Props) {
                         {/* Status badge */}
                         <span
                           className="text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0"
-                          style={{
-                            background: isPast ? "rgba(255,255,255,0.06)" : "rgba(16,185,129,0.15)",
-                            color: isPast ? "rgba(255,255,255,0.25)" : "#10B981",
-                            border: `1px solid ${isPast ? "rgba(255,255,255,0.08)" : "rgba(16,185,129,0.25)"}`,
-                          }}
+                          style={
+                            isPast
+                              ? {
+                                  background: "var(--glass-bg-subtle)",
+                                  color: "var(--text-muted)",
+                                  border: "1px solid var(--divider)",
+                                }
+                              : {
+                                  background: "rgba(16,185,129,0.15)",
+                                  color: "#10B981",
+                                  border: "1px solid rgba(16,185,129,0.25)",
+                                }
+                          }
                         >
                           {isPast ? "done" : "upcoming"}
                         </span>
@@ -187,7 +222,6 @@ export function NotificationPanel({ open, onClose }: Props) {
                   })}
                 </ul>
               )}
-
             </div>
           </motion.div>
         </>
