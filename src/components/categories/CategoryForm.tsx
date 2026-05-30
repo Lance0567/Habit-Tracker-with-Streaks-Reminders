@@ -24,16 +24,15 @@ interface Props {
 }
 
 export function CategoryForm({ open, onClose, initial, onSave }: Props) {
-  const [name, setName] = useState(initial?.name ?? "");
-  const [color, setColor] = useState(initial?.color ?? "#7C3AED");
-  const [icon, setIcon] = useState(initial?.icon ?? "Tag");
+  const [name, setName]     = useState(initial?.name  ?? "");
+  const [color, setColor]   = useState(initial?.color ?? "#7C3AED");
+  const [icon, setIcon]     = useState(initial?.icon  ?? "Tag");
   const [saving, setSaving] = useState(false);
 
-  // Reset fields when modal opens/changes target
   const handleOpen = () => {
-    setName(initial?.name ?? "");
+    setName(initial?.name  ?? "");
     setColor(initial?.color ?? "#7C3AED");
-    setIcon(initial?.icon ?? "Tag");
+    setIcon(initial?.icon  ?? "Tag");
     setSaving(false);
   };
 
@@ -47,6 +46,8 @@ export function CategoryForm({ open, onClose, initial, onSave }: Props) {
       setSaving(false);
     }
   }
+
+  const hasName = name.trim().length > 0;
 
   return (
     <GlassModal
@@ -62,24 +63,30 @@ export function CategoryForm({ open, onClose, initial, onSave }: Props) {
           placeholder="e.g. Health, Work, Creative…"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && hasName && handleSave()}
           autoFocus
         />
 
         {/* Color */}
         <div className="space-y-2">
-          <p className="text-xs font-medium text-white/50 uppercase tracking-wider">Color</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--text-muted)" }}>
+            Color
+          </p>
           <div className="flex flex-wrap gap-2">
             {HABIT_COLORS.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setColor(c)}
-                className="w-7 h-7 rounded-full border-2 transition-all duration-150 flex-shrink-0"
+                aria-label={c}
+                aria-pressed={color === c}
+                className="w-7 h-7 rounded-full transition-all duration-150 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-1"
                 style={{
                   backgroundColor: c,
-                  borderColor: color === c ? "#fff" : "transparent",
-                  boxShadow: color === c ? `0 0 8px ${c}` : "none",
-                  transform: color === c ? "scale(1.2)" : "scale(1)",
+                  outline: color === c ? `3px solid ${c}` : "2px solid transparent",
+                  outlineOffset: color === c ? "2px" : "0px",
+                  boxShadow: color === c ? `0 0 10px ${c}60` : "none",
+                  transform: color === c ? "scale(1.18)" : "scale(1)",
                 }}
               />
             ))}
@@ -88,22 +95,26 @@ export function CategoryForm({ open, onClose, initial, onSave }: Props) {
 
         {/* Icon */}
         <div className="space-y-2">
-          <p className="text-xs font-medium text-white/50 uppercase tracking-wider">Icon</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--text-muted)" }}>
+            Icon
+          </p>
           <div className="grid grid-cols-9 gap-1.5">
-            {CATEGORY_ICONS.map((name) => {
-              const Icon = getIcon(name);
-              const active = icon === name;
+            {CATEGORY_ICONS.map((iconName) => {
+              const Icon = getIcon(iconName);
+              const active = icon === iconName;
               return (
                 <button
-                  key={name}
+                  key={iconName}
                   type="button"
-                  onClick={() => setIcon(name)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all border"
+                  onClick={() => setIcon(iconName)}
+                  aria-label={iconName}
+                  aria-pressed={active}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-1"
                   style={{
-                    background: active ? `${color}25` : "rgba(255,255,255,0.04)",
-                    borderColor: active ? `${color}60` : "rgba(255,255,255,0.08)",
-                    color: active ? color : "rgba(255,255,255,0.35)",
-                    boxShadow: active ? `0 0 8px ${color}40` : "none",
+                    background: active ? `${color}18` : "var(--glass-bg-subtle)",
+                    border: `1px solid ${active ? `${color}50` : "var(--glass-border)"}`,
+                    color: active ? color : "var(--text-muted)",
+                    boxShadow: active ? `0 0 8px ${color}30` : "none",
                   }}
                 >
                   <Icon size={14} />
@@ -114,20 +125,25 @@ export function CategoryForm({ open, onClose, initial, onSave }: Props) {
         </div>
 
         {/* Preview */}
-        <div className="flex items-center gap-3 p-3 rounded-[var(--radius-md)]"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div
+          className="flex items-center gap-3 p-3 rounded-[var(--radius-md)]"
+          style={{
+            background: "var(--glass-bg-subtle)",
+            border: "1px solid var(--glass-border)",
+          }}
+        >
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{
               background: `${color}20`,
               border: `1px solid ${color}35`,
-              boxShadow: `0 0 12px ${color}25`,
+              boxShadow: `0 0 12px ${color}20`,
             }}
           >
             {(() => { const I = getIcon(icon); return <I size={18} color={color} />; })()}
           </div>
-          <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.75)" }}>
-            {name.trim() || <span style={{ color: "rgba(255,255,255,0.2)" }}>Category name</span>}
+          <p className="text-sm font-medium" style={{ color: hasName ? "var(--text-primary)" : "var(--text-muted)" }}>
+            {name.trim() || "Category name"}
           </p>
         </div>
 
@@ -136,14 +152,30 @@ export function CategoryForm({ open, onClose, initial, onSave }: Props) {
           <GlassButton variant="secondary" className="flex-1" onClick={onClose}>
             Cancel
           </GlassButton>
-          <GlassButton
-            variant="primary"
-            className="flex-1"
-            disabled={!name.trim() || saving}
+          <button
+            type="button"
+            disabled={!hasName || saving}
             onClick={handleSave}
+            className="flex-1 py-2 px-4 rounded-[var(--radius-md)] text-sm font-medium transition-all duration-200 disabled:cursor-not-allowed"
+            style={
+              hasName
+                ? {
+                    background: color,
+                    color: "#ffffff",
+                    boxShadow: `0 4px 14px ${color}45`,
+                    border: "1px solid transparent",
+                    opacity: saving ? 0.65 : 1,
+                  }
+                : {
+                    background: "var(--glass-bg-default)",
+                    color: "var(--text-muted)",
+                    border: "1px solid var(--glass-border-hover)",
+                    boxShadow: "none",
+                  }
+            }
           >
             {saving ? "Saving…" : initial ? "Save Changes" : "Create"}
-          </GlassButton>
+          </button>
         </div>
       </div>
     </GlassModal>

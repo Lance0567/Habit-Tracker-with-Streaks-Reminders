@@ -49,11 +49,11 @@ export function NotificationPanel({ open, onClose }: Props) {
             <div
               className="overflow-hidden rounded-[var(--radius-lg)]"
               style={{
-                background: "var(--glass-bg-elevated)",
+                background: "var(--popup-bg)",
                 backdropFilter: "blur(32px)",
                 WebkitBackdropFilter: "blur(32px)",
-                border: "1px solid var(--glass-border)",
-                boxShadow: "0 24px 64px rgba(0,0,0,0.25), 0 0 0 1px var(--divider)",
+                border: "1px solid var(--popup-border)",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.40), 0 0 0 1px var(--divider)",
               }}
             >
               {/* Header */}
@@ -64,7 +64,7 @@ export function NotificationPanel({ open, onClose }: Props) {
                 <div className="flex items-center gap-2">
                   <div
                     className="w-6 h-6 rounded-lg flex items-center justify-center"
-                    style={{ background: "var(--color-accent)/18", color: "var(--color-accent-light)" }}
+                    style={{ background: "rgba(124,58,237,0.18)", color: "var(--color-accent-light)" }}
                   >
                     <Bell size={12} style={{ color: "var(--color-accent-light)" }} />
                   </div>
