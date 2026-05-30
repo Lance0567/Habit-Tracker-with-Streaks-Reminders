@@ -86,5 +86,7 @@ export interface AppSettings {
   swRegistered: boolean;
   weekStartsOn: 0 | 1;
   defaultView: "grid" | "list";
+  accentColor?: string;
+  theme?: "dark" | "light";
   createdAt: string;
 }

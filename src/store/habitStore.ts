@@ -90,6 +90,11 @@ export const useHabitStore = create<HabitStore>((set) => ({
 
   updateSettings: async (settings) => {
     await storage.saveSettings(settings);
+    // Mirror theme to localStorage so the blocking <head> script can read it
+    // synchronously on next page load and prevent the dark→light flash.
+    try {
+      if (settings.theme) localStorage.setItem("habitflow-theme", settings.theme);
+    } catch (_) {}
     set({ settings });
   },
 

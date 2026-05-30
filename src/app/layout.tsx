@@ -1,22 +1,19 @@
-"use client";
-
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { usePathname } from "next/navigation";
-import { MotionConfig } from "framer-motion";
-import { AnimatedBackground } from "@/components/layout/AnimatedBackground";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { TopBar } from "@/components/layout/TopBar";
-import { BottomNav } from "@/components/layout/BottomNav";
-import { StoreProvider } from "@/components/layout/StoreProvider";
-import { useUIStore } from "@/store/uiStore";
-import { clsx } from "clsx";
+import { AppShell } from "@/components/layout/AppShell";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
 });
+
+/**
+ * This script runs synchronously in <head> BEFORE React hydrates.
+ * It reads the persisted theme from localStorage and applies data-theme
+ * to <html> immediately, eliminating the dark→light flash on refresh.
+ */
+const themeInitScript = `(function(){try{var t=localStorage.getItem('habitflow-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
 
 export default function RootLayout({
   children,
@@ -25,48 +22,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="min-h-screen antialiased bg-[#050510]">
-        <MotionConfig reducedMotion="user">
-          <StoreProvider>
-            <AnimatedBackground />
-            <LayoutShell>{children}</LayoutShell>
-          </StoreProvider>
-        </MotionConfig>
+      <head>
+        {/* Blocking theme initializer — must be first to prevent flash */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="min-h-screen antialiased">
+        <AppShell>{children}</AppShell>
       </body>
     </html>
-  );
-}
-
-function LayoutShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const collapsed = useUIStore((s) => s.sidebarCollapsed);
-
-  const isAppRoute =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/habits") ||
-    pathname.startsWith("/analytics") ||
-    pathname.startsWith("/categories") ||
-    pathname.startsWith("/settings");
-
-  if (!isAppRoute) return <>{children}</>;
-
-  return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <div
-        className={clsx(
-          "flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-          collapsed ? "md:ml-[72px]" : "md:ml-[240px]"
-        )}
-      >
-        <TopBar />
-        <main className="flex-1 p-4 sm:p-6">
-          {children}
-          {/* Spacer so content clears the bottom nav on mobile */}
-          <div className="h-20 md:hidden" aria-hidden />
-        </main>
-        <BottomNav />
-      </div>
-    </div>
   );
 }

@@ -38,6 +38,31 @@
   --glow-md: 0 0 20px var(--color-accent-glow);
   --glow-lg: 0 0 40px var(--color-accent-glow);
 
+  /* Dividers / subtle internal card borders */
+  --divider: rgba(255, 255, 255, 0.05);
+
+  /* Background grid texture */
+  --grid-line: rgba(255, 255, 255, 0.015);
+
+  /* HeatMap */
+  --heatmap-empty: rgba(255, 255, 255, 0.06);
+  --heatmap-hover: rgba(255, 255, 255, 0.10);
+  --heatmap-label: rgba(255, 255, 255, 0.28);
+
+  /* Progress ring track */
+  --ring-track: rgba(255, 255, 255, 0.08);
+
+  /* Navigation surfaces (sidebar, topbar, bottomnav) */
+  --nav-bg: rgba(6, 4, 18, 0.94);
+  --nav-border: rgba(255, 255, 255, 0.06);
+
+  /* Primary button tokens — solid accent in both modes */
+  --btn-primary-bg: var(--color-accent);
+  --btn-primary-bg-hover: #6D28D9;
+  --btn-primary-border: rgba(124, 58, 237, 0.70);
+  --btn-primary-border-hover: rgba(109, 40, 217, 0.90);
+  --btn-primary-text: #ffffff;
+
   /* Radii */
   --radius-sm: 8px;
   --radius-md: 14px;
@@ -49,6 +74,56 @@
   --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 450ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ─── Light mode overrides ─────────────────────────────────────── */
+[data-theme="light"] {
+  /* Backgrounds — warm lavender-white */
+  --bg-base:     #F3F1FF;
+  --bg-surface:  #FEFEFF;
+  --bg-elevated: #E8E3FF;
+
+  /* Glass — crisp white frost with purple tint border */
+  --glass-bg-default:  rgba(255, 255, 255, 0.78);
+  --glass-bg-elevated: rgba(255, 255, 255, 0.94);
+  --glass-bg-subtle:   rgba(255, 255, 255, 0.50);
+  --glass-border:      rgba(124, 58, 237, 0.14);
+  --glass-border-hover:rgba(124, 58, 237, 0.28);
+
+  /* Text — deep purple-navy hierarchy */
+  --text-primary:   #17103A;
+  --text-secondary: #5C4D96;
+  --text-muted:     #9589C4;
+
+  /* Glow — softer in light */
+  --glow-sm: 0 0 10px rgba(124, 58, 237, 0.18);
+  --glow-md: 0 0 22px rgba(124, 58, 237, 0.18);
+  --glow-lg: 0 0 44px rgba(124, 58, 237, 0.18);
+
+  /* Dividers — accent-tinted */
+  --divider: rgba(124, 58, 237, 0.08);
+
+  /* Background grid texture — subtle purple */
+  --grid-line: rgba(80, 50, 160, 0.045);
+
+  /* Navigation — pure frosted white */
+  --nav-bg:     rgba(255, 253, 255, 0.92);
+  --nav-border: rgba(124, 58, 237, 0.12);
+
+  /* HeatMap */
+  --heatmap-empty: rgba(100, 80, 180, 0.10);
+  --heatmap-hover: rgba(100, 80, 180, 0.18);
+  --heatmap-label: rgba(15, 10, 40, 0.35);
+
+  /* Progress ring track */
+  --ring-track: rgba(100, 80, 180, 0.14);
+
+  /* Primary button — solid accent in light mode */
+  --btn-primary-bg: var(--color-accent);
+  --btn-primary-bg-hover: #6D28D9;
+  --btn-primary-border: var(--color-accent);
+  --btn-primary-border-hover: #5B21B6;
+  --btn-primary-text: #ffffff;
 }
 
 * {
@@ -65,6 +140,7 @@ body {
   color: var(--text-primary);
   font-family: var(--font-inter, system-ui, sans-serif);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Scrollbar styling */
@@ -82,11 +158,21 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.20);
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.35);
+}
 
 /* Selection */
 ::selection {
   background: rgba(124, 58, 237, 0.3);
   color: #fff;
+}
+[data-theme="light"] ::selection {
+  background: rgba(124, 58, 237, 0.18);
+  color: #17103A;
 }
 
 /* Focus ring */
@@ -116,7 +202,7 @@ body {
     background: var(--glass-bg-subtle);
     backdrop-filter: var(--glass-blur-sm);
     -webkit-backdrop-filter: var(--glass-blur-sm);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--glass-border);
   }
 
   .glow-accent {
@@ -157,8 +243,18 @@ body {
     rgba(255, 255, 255, 0.10) 50%,
     rgba(255, 255, 255, 0.04) 75%
   );
-  background-size: 200% 100%;
+  background-size: 220% 100%;
   animation: shimmer 1.6s ease-in-out infinite;
+}
+
+[data-theme="light"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(124, 58, 237, 0.06) 25%,
+    rgba(124, 58, 237, 0.13) 50%,
+    rgba(124, 58, 237, 0.06) 75%
+  );
+  background-size: 220% 100%;
 }
 
 /* Reduced-motion: disable shimmer, honour OS preference for framer-motion via MotionConfig */
@@ -166,6 +262,9 @@ body {
   .skeleton {
     animation: none;
     background: rgba(255, 255, 255, 0.06);
+  }
+  [data-theme="light"] .skeleton {
+    background: rgba(124, 58, 237, 0.08);
   }
 }
 
