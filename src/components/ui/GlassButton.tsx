@@ -15,11 +15,11 @@ interface GlassButtonProps extends HTMLMotionProps<"button"> {
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-accent/20 border border-accent/40 text-accent-light hover:bg-accent/30 hover:border-accent/70 shadow-glow-sm hover:shadow-glow",
+    "bg-[var(--btn-primary-bg)] border border-[var(--btn-primary-border)] text-[var(--btn-primary-text)] hover:bg-[var(--btn-primary-bg-hover)] hover:border-[var(--btn-primary-border-hover)] shadow-glow-sm hover:shadow-glow",
   secondary:
-    "glass border-white/10 text-white/80 hover:border-white/20 hover:text-white hover:bg-white/10",
+    "glass border-[var(--glass-border)] text-[var(--text-primary)] hover:border-[var(--glass-border-hover)] hover:bg-[var(--glass-bg-elevated)]",
   ghost:
-    "bg-transparent border-transparent text-white/60 hover:text-white hover:bg-white/5",
+    "bg-transparent border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
   danger:
     "bg-rose/10 border border-rose/30 text-rose hover:bg-rose/20 hover:border-rose/60 hover:shadow-[0_0_20px_rgba(244,63,94,0.4)]",
 };
@@ -42,7 +42,7 @@ export function GlassButton({
   return (
     <motion.button
       className={clsx(
-        "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none",
         variantClasses[variant],
         sizeClasses[size],
         className
