@@ -14,11 +14,13 @@ import {
 } from "recharts";
 
 const TOOLTIP_STYLE: React.CSSProperties = {
-  background: "rgba(10, 7, 28, 0.97)",
-  border: "1px solid rgba(124, 58, 237, 0.28)",
+  background: "var(--glass-bg-elevated)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+  border: "1px solid var(--glass-border)",
   borderRadius: 10,
   padding: "8px 12px",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
 };
 
 const FALLBACK_DATA = [
@@ -42,7 +44,7 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
   if (!active || !payload?.length) return null;
   return (
     <div style={TOOLTIP_STYLE}>
-      <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 10, marginBottom: 6 }}>{label}</p>
+      <p style={{ color: "var(--text-muted)", fontSize: 10, marginBottom: 6 }}>{label}</p>
       {payload.map((p) => (
         <p key={p.dataKey as string} style={{ color: p.color as string, fontSize: 12, marginBottom: 2, fontWeight: 500 }}>
           {p.name}: {p.value ? "✓" : "✗"}
@@ -68,15 +70,15 @@ export function TrendLineChart({ data, habits }: Props) {
   const lines = habits && habits.length > 0 ? habits : FALLBACK_HABITS;
 
   return (
-    <ResponsiveContainer width="100%" height={200}>
+    <ResponsiveContainer width="100%" height={220}>
       <LineChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-        <XAxis dataKey="day" tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }} axisLine={false} tickLine={false} domain={[-0.1, 1.1]} ticks={[0, 1]} />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--divider)" />
+        <XAxis dataKey="day" tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} domain={[-0.1, 1.1]} ticks={[0, 1]} />
         <Tooltip content={<CustomTooltip />} />
         <Legend
           wrapperStyle={{ fontSize: 10, paddingTop: 8 }}
-          formatter={(value) => <span style={{ color: "rgba(255,255,255,0.4)" }}>{value}</span>}
+          formatter={(value) => <span style={{ color: "var(--text-secondary)" }}>{value}</span>}
         />
         {lines.map(({ key, color, label }) => (
           <Line

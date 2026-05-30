@@ -50,8 +50,8 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
-        <h2 className="text-2xl font-bold text-white/90">Analytics</h2>
-        <p className="text-sm text-white/35 mt-0.5">Your habit performance at a glance</p>
+        <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Analytics</h2>
+        <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>Your habit performance at a glance</p>
       </motion.div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -70,8 +70,8 @@ export default function AnalyticsPage() {
                 {s.icon}
               </span>
               <div>
-                <p className="text-xl font-bold tabular-nums text-white/90">{s.value}</p>
-                <p className="text-xs text-white/35">{s.label}</p>
+                <p className="text-xl font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>{s.value}</p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>{s.label}</p>
               </div>
             </GlassCard>
           </motion.div>
@@ -109,8 +109,8 @@ export default function AnalyticsPage() {
           >
             <GlassCard className="p-5">
               <div className="mb-4">
-                <h3 className="text-sm font-semibold text-white/75">{title}</h3>
-                <p className="text-xs text-white/30 mt-0.5">{sub}</p>
+                <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{title}</h3>
+                <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{sub}</p>
               </div>
               {component}
             </GlassCard>

@@ -22,7 +22,7 @@ export function CategoryFilter({
           "px-4 py-1.5 text-xs font-medium rounded-full border transition-all duration-200",
           selected === null
             ? "bg-accent/20 border-accent/40 text-accent-light"
-            : "glass border-white/10 text-white/40 hover:text-white/70 hover:border-white/20"
+            : "glass border-[var(--glass-border)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--glass-border-hover)]"
         )}
       >
         All
@@ -35,7 +35,7 @@ export function CategoryFilter({
             "px-4 py-1.5 text-xs font-medium rounded-full border transition-all duration-200",
             selected === cat.id
               ? "border-opacity-50"
-              : "glass border-white/10 text-white/40 hover:text-white/70 hover:border-white/20"
+              : "glass border-[var(--glass-border)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--glass-border-hover)]"
           )}
           style={
             selected === cat.id

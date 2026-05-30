@@ -10,12 +10,15 @@ interface StreakBadgeProps {
 
 function getGlowIntensity(count: number) {
   if (count >= 100) return { shadow: "0 0 6px rgba(245,158,11,0.95)", scale: 1.2 };
-  if (count >= 30) return { shadow: "0 0 5px rgba(245,158,11,0.85)", scale: 1.1 };
-  if (count >= 7) return { shadow: "0 0 4px rgba(245,158,11,0.7)", scale: 1.05 };
+  if (count >= 30)  return { shadow: "0 0 5px rgba(245,158,11,0.85)", scale: 1.1 };
+  if (count >= 7)   return { shadow: "0 0 4px rgba(245,158,11,0.7)",  scale: 1.05 };
   return { shadow: "0 0 3px rgba(245,158,11,0.4)", scale: 1 };
 }
 
 export function StreakBadge({ count, size = "md" }: StreakBadgeProps) {
+  // Hide badge entirely when there's no streak — showing "🔥 0" adds noise
+  if (count === 0) return null;
+
   const { shadow, scale } = getGlowIntensity(count);
 
   const sizeClasses = {
@@ -23,7 +26,7 @@ export function StreakBadge({ count, size = "md" }: StreakBadgeProps) {
     md: "gap-1.5 text-sm",
     lg: "gap-2 text-base",
   };
-  const iconSize = { sm: 12, md: 14, lg: 18 }[size];
+  const iconSize      = { sm: 12, md: 14, lg: 18 }[size];
   const containerSize = { sm: 16, md: 18, lg: 24 }[size];
 
   return (
@@ -51,9 +54,7 @@ export function StreakBadge({ count, size = "md" }: StreakBadgeProps) {
           }}
         />
       </span>
-      <span style={{ color: "#F59E0B", textShadow: "0 0 6px rgba(0,0,0,0.95)" }}>
-        {count}
-      </span>
+      <span style={{ color: "#F59E0B" }}>{count}</span>
     </div>
   );
 }

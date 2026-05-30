@@ -14,26 +14,34 @@ export const GlassInput = forwardRef<HTMLInputElement, GlassInputProps>(
     return (
       <div className="flex flex-col gap-1.5">
         {label && (
-          <label className="text-xs font-medium text-white/50 uppercase tracking-wider">
+          <label
+            className="text-xs font-medium uppercase tracking-wider"
+            style={{ color: "var(--text-secondary)" }}
+          >
             {label}
           </label>
         )}
         <div className="relative">
           {icon && (
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30">
+            <span
+              className="absolute left-3 top-1/2 -translate-y-1/2"
+              style={{ color: "var(--text-muted)" }}
+            >
               {icon}
             </span>
           )}
           <input
             ref={ref}
             className={clsx(
-              "w-full glass rounded-[var(--radius-md)] px-4 py-2.5 text-sm text-white/90 placeholder:text-white/25",
-              "focus:outline-none focus:border-accent/50 focus:bg-white/10 transition-all duration-200",
-              "border border-white/10",
+              "w-full glass rounded-[var(--radius-md)] px-4 py-2.5 text-sm transition-all duration-200",
+              "focus:outline-none focus:border-[var(--color-accent)]/50 focus:bg-[var(--glass-bg-elevated)]",
+              "border border-[var(--glass-border)]",
+              "text-[var(--text-primary)] placeholder:text-[var(--text-muted)]",
               icon && "pl-10",
               error && "border-rose/50",
               className
             )}
+            style={{ color: "var(--text-primary)" }}
             {...props}
           />
         </div>
@@ -57,19 +65,24 @@ export const GlassTextarea = forwardRef<
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label className="text-xs font-medium text-white/50 uppercase tracking-wider">
+        <label
+          className="text-xs font-medium uppercase tracking-wider"
+          style={{ color: "var(--text-secondary)" }}
+        >
           {label}
         </label>
       )}
       <textarea
         ref={ref}
         className={clsx(
-          "w-full glass rounded-[var(--radius-md)] px-4 py-2.5 text-sm text-white/90 placeholder:text-white/25 resize-none",
-          "focus:outline-none focus:border-accent/50 focus:bg-white/10 transition-all duration-200",
-          "border border-white/10",
+          "w-full glass rounded-[var(--radius-md)] px-4 py-2.5 text-sm resize-none transition-all duration-200",
+          "focus:outline-none focus:border-[var(--color-accent)]/50 focus:bg-[var(--glass-bg-elevated)]",
+          "border border-[var(--glass-border)]",
+          "text-[var(--text-primary)] placeholder:text-[var(--text-muted)]",
           error && "border-rose/50",
           className
         )}
+        style={{ color: "var(--text-primary)" }}
         {...props}
       />
       {error && <p className="text-xs text-rose">{error}</p>}

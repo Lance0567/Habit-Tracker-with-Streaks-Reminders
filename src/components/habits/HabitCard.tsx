@@ -71,12 +71,14 @@ export function HabitCard({
           <div className="min-w-0">
             <Link
               href={`/habits/${habit.id}`}
-              className="text-sm font-semibold text-white/85 hover:text-white truncate block transition-colors"
+              title={habit.name}
+              className="text-sm font-semibold truncate block transition-colors hover:opacity-80"
+              style={{ color: "var(--text-primary)" }}
             >
               {habit.name}
             </Link>
             {habit.description && (
-              <p className="text-xs text-white/35 truncate mt-0.5">{habit.description}</p>
+              <p className="text-xs truncate mt-0.5" title={habit.description} style={{ color: "var(--text-muted)" }}>{habit.description}</p>
             )}
           </div>
         </div>
@@ -93,7 +95,7 @@ export function HabitCard({
           strokeWidth={3}
           color={habit.color}
         >
-          <span className="text-[9px] font-bold text-white/60 tabular-nums">
+          <span className="text-[9px] font-bold tabular-nums" style={{ color: "var(--text-secondary)" }}>
             {Math.round(completionRate)}%
           </span>
         </ProgressRing>

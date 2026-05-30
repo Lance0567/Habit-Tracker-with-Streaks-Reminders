@@ -13,11 +13,13 @@ import {
 } from "recharts";
 
 const TOOLTIP_STYLE: React.CSSProperties = {
-  background: "rgba(10, 7, 28, 0.97)",
-  border: "1px solid rgba(124, 58, 237, 0.28)",
+  background: "var(--glass-bg-elevated)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+  border: "1px solid var(--glass-border)",
   borderRadius: 10,
   padding: "8px 12px",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
 };
 
 const FALLBACK = [
@@ -31,8 +33,8 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
   if (!active || !payload?.length) return null;
   return (
     <div style={TOOLTIP_STYLE}>
-      <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 10, marginBottom: 4 }}>{label}</p>
-      <p style={{ color: "#A78BFA", fontWeight: 600, fontSize: 12 }}>{payload[0].value}% completed</p>
+      <p style={{ color: "var(--text-muted)", fontSize: 10, marginBottom: 4 }}>{label}</p>
+      <p style={{ color: "var(--color-accent-light)", fontWeight: 600, fontSize: 12 }}>{payload[0].value}% completed</p>
     </div>
   );
 }
@@ -48,22 +50,22 @@ export function CompletionRateChart({ data }: Props) {
       <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
         <defs>
           <linearGradient id="rateGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.4} />
-            <stop offset="95%" stopColor="#7C3AED" stopOpacity={0} />
+            <stop offset="5%" stopColor="var(--color-accent)" stopOpacity={0.4} />
+            <stop offset="95%" stopColor="var(--color-accent)" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-        <XAxis dataKey="week" tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }} axisLine={false} tickLine={false} domain={[0, 100]} />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--divider)" />
+        <XAxis dataKey="week" tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} domain={[0, 100]} />
         <Tooltip content={<CustomTooltip />} />
         <Area
           type="monotone"
           dataKey="rate"
-          stroke="#7C3AED"
+          stroke="var(--color-accent)"
           strokeWidth={2}
           fill="url(#rateGrad)"
           dot={false}
-          activeDot={{ r: 4, fill: "#7C3AED", stroke: "#A78BFA", strokeWidth: 2 }}
+          activeDot={{ r: 4, fill: "var(--color-accent)", stroke: "var(--color-accent-light)", strokeWidth: 2 }}
         />
       </AreaChart>
     </ResponsiveContainer>

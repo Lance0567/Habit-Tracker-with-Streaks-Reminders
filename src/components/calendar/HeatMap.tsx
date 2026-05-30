@@ -79,7 +79,7 @@ export function HeatMap({ days, color = "#7C3AED", cellSize = 12, gap = 3 }: Hea
               x={x}
               y={12}
               fontSize={10}
-              fill="rgba(255,255,255,0.3)"
+              fill="var(--heatmap-label)"
               fontFamily="var(--font-inter, system-ui)"
             >
               {label}
@@ -96,7 +96,7 @@ export function HeatMap({ days, color = "#7C3AED", cellSize = 12, gap = 3 }: Hea
                 x={0}
                 y={d * stride + cellSize * 0.8}
                 fontSize={9}
-                fill="rgba(255,255,255,0.25)"
+                fill="var(--heatmap-label)"
                 fontFamily="var(--font-inter, system-ui)"
               >
                 {DAYS[d]}
@@ -118,7 +118,7 @@ export function HeatMap({ days, color = "#7C3AED", cellSize = 12, gap = 3 }: Hea
 
         {/* Legend */}
         <div className="flex items-center gap-1.5 mt-3 ml-8">
-          <span className="text-[10px] text-white/25 mr-1">Less</span>
+          <span className="text-[10px] mr-1" style={{ color: "var(--text-muted)" }}>Less</span>
           {([0, 1, 2, 3, 4] as const).map((level) => (
             <svg key={level} width={cellSize} height={cellSize}>
               <rect
@@ -127,7 +127,7 @@ export function HeatMap({ days, color = "#7C3AED", cellSize = 12, gap = 3 }: Hea
                 rx={2}
                 fill={
                   level === 0
-                    ? "rgba(255,255,255,0.04)"
+                    ? "var(--heatmap-empty)"
                     : level === 1 ? `${color}40`
                     : level === 2 ? `${color}70`
                     : level === 3 ? `${color}aa`
@@ -136,7 +136,7 @@ export function HeatMap({ days, color = "#7C3AED", cellSize = 12, gap = 3 }: Hea
               />
             </svg>
           ))}
-          <span className="text-[10px] text-white/25 ml-1">More</span>
+          <span className="text-[10px] ml-1" style={{ color: "var(--text-muted)" }}>More</span>
         </div>
       </div>
 
@@ -148,16 +148,18 @@ export function HeatMap({ days, color = "#7C3AED", cellSize = 12, gap = 3 }: Hea
             left: tooltip.x,
             top: tooltip.y - 48,
             transform: "translateX(-50%)",
-            background: "rgba(14,9,36,0.97)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
+            background: "var(--glass-bg-elevated)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            border: "1px solid var(--glass-border)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
           }}
         >
-          <span className="text-white/45 mr-2">
+          <span className="mr-2" style={{ color: "var(--text-muted)" }}>
             {format(parseISO(tooltip.day.date), "EEE, MMM d, yyyy")}
           </span>
           {tooltip.day.count === 0 ? (
-            <span className="text-white/25">No completions</span>
+            <span style={{ color: "var(--text-muted)" }}>No completions</span>
           ) : (
             <span style={{ color }}>
               {tooltip.day.count} completion{tooltip.day.count !== 1 ? "s" : ""}

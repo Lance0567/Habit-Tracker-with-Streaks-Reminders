@@ -42,7 +42,7 @@ export default function HabitDetailPage({ params }: { params: { id: string } }) 
   if (!habit || !stats || !IconComponent) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <p className="text-white/40">Habit not found.</p>
+        <p style={{ color: "var(--text-muted)" }}>Habit not found.</p>
         <GlassButton variant="secondary" onClick={() => router.push("/habits")}>
           Back to Habits
         </GlassButton>
@@ -90,7 +90,8 @@ export default function HabitDetailPage({ params }: { params: { id: string } }) 
           <div className="relative p-4 flex items-center gap-3">
             <button
               onClick={() => router.back()}
-              className="p-1.5 glass rounded-lg border border-white/8 text-white/40 hover:text-white/75 transition-colors flex-shrink-0"
+              className="p-1.5 glass rounded-lg transition-colors flex-shrink-0"
+              style={{ color: "var(--text-muted)", border: "1px solid var(--glass-border)" }}
             >
               <ArrowLeft size={15} />
             </button>
@@ -105,9 +106,9 @@ export default function HabitDetailPage({ params }: { params: { id: string } }) 
             </div>
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-sm font-bold text-white/90 truncate leading-snug">{habit.name}</h1>
+              <h1 className="text-sm font-bold truncate leading-snug" style={{ color: "var(--text-primary)" }}>{habit.name}</h1>
               {habit.description && (
-                <p className="text-[11px] text-white/38 truncate">{habit.description}</p>
+                <p className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>{habit.description}</p>
               )}
             </div>
 
@@ -151,9 +152,12 @@ export default function HabitDetailPage({ params }: { params: { id: string } }) 
             <div className="flex items-center justify-between mb-7">
               <button
                 onClick={() => router.back()}
-                className="flex items-center gap-2 text-white/35 hover:text-white/75 transition-colors group"
+                className="flex items-center gap-2 transition-colors group"
+                style={{ color: "var(--text-muted)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
               >
-                <span className="p-1.5 glass rounded-lg border border-white/8 group-hover:border-white/16 transition-colors">
+                <span className="p-1.5 glass rounded-lg transition-colors" style={{ border: "1px solid var(--glass-border)" }}>
                   <ArrowLeft size={15} />
                 </span>
                 <span className="text-sm font-medium">Back</span>
@@ -188,11 +192,11 @@ export default function HabitDetailPage({ params }: { params: { id: string } }) 
 
               {/* name + description + quick tags */}
               <div className="min-w-0 flex-1">
-                <h1 className="text-3xl font-bold text-white/92 leading-tight truncate">
+                <h1 className="text-3xl font-bold leading-tight truncate" style={{ color: "var(--text-primary)" }}>
                   {habit.name}
                 </h1>
                 {habit.description && (
-                  <p className="text-base text-white/38 mt-1 truncate">{habit.description}</p>
+                  <p className="text-base mt-1 truncate" style={{ color: "var(--text-muted)" }}>{habit.description}</p>
                 )}
                 <div className="flex flex-wrap items-center gap-2 mt-4">
                   <span
@@ -203,7 +207,7 @@ export default function HabitDetailPage({ params }: { params: { id: string } }) 
                   </span>
                   <span
                     className="text-xs font-mono px-3 py-1 rounded-full"
-                    style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.38)" }}
+                    style={{ background: "var(--glass-bg-subtle)", color: "var(--text-muted)", border: "1px solid var(--divider)" }}
                   >
                     {stats.totalCompletions} total check-ins
                   </span>
@@ -223,9 +227,13 @@ export default function HabitDetailPage({ params }: { params: { id: string } }) 
         transition={{ delay: 0.07 }}
       >
         {/* Desktop: single horizontal band, colored numbers */}
-        <GlassCard className="hidden md:grid grid-cols-4 divide-x divide-white/[0.05]">
-          {statItems.map(({ label, sub, value, Icon, color }) => (
-            <div key={label} className="flex flex-col items-center justify-center py-7 px-4 gap-0">
+        <GlassCard className="hidden md:grid grid-cols-4">
+          {statItems.map(({ label, sub, value, Icon, color }, idx) => (
+            <div
+              key={label}
+              className="flex flex-col items-center justify-center py-7 px-4 gap-0"
+              style={idx > 0 ? { borderLeft: "1px solid var(--divider)" } : {}}
+            >
               <Icon size={14} style={{ color, marginBottom: 10, opacity: 0.8 }} />
               <p
                 className="text-4xl font-black tabular-nums leading-none"
@@ -233,8 +241,8 @@ export default function HabitDetailPage({ params }: { params: { id: string } }) 
               >
                 {value}
               </p>
-              <p className="text-xs font-semibold text-white/70 mt-2">{label}</p>
-              <p className="text-[10px] text-white/28 mt-0.5">{sub}</p>
+              <p className="text-xs font-semibold mt-2" style={{ color: "var(--text-secondary)" }}>{label}</p>
+              <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>{sub}</p>
             </div>
           ))}
         </GlassCard>
@@ -259,7 +267,7 @@ export default function HabitDetailPage({ params }: { params: { id: string } }) 
                 >
                   {value}
                 </p>
-                <p className="text-[10px] text-white/40 mt-0.5 leading-tight">{label}</p>
+                <p className="text-[10px] mt-0.5 leading-tight" style={{ color: "var(--text-muted)" }}>{label}</p>
               </GlassCard>
             </motion.div>
           ))}
@@ -276,7 +284,7 @@ export default function HabitDetailPage({ params }: { params: { id: string } }) 
       >
         <GlassCard className="p-4 md:p-6">
           <div className="flex items-center justify-between mb-3 md:mb-5">
-            <h3 className="text-xs md:text-sm font-semibold text-white/50 uppercase tracking-wider">
+            <h3 className="text-xs md:text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
               Activity — Past Year
             </h3>
             <span

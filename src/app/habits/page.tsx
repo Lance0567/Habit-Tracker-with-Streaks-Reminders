@@ -55,17 +55,17 @@ function HabitsContent() {
         className="flex items-center justify-between"
       >
         <div>
-          <h2 className="text-2xl font-bold text-white/90">All Habits</h2>
-          <p className="text-sm text-white/35 mt-0.5">{habits.length} habits tracked</p>
+          <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>All Habits</h2>
+          <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>{habits.length} habits tracked</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Grid / List toggle */}
-          <div className="flex glass rounded-lg border border-white/8 overflow-hidden">
+          <div className="flex glass rounded-lg overflow-hidden">
             <button
               onClick={() => handleSetView("grid")}
               className={clsx(
                 "p-2 transition-colors",
-                view === "grid" ? "bg-accent/20 text-accent-light" : "text-white/35 hover:text-white/60"
+                view === "grid" ? "bg-[var(--color-accent)]/20 text-[var(--color-accent-light)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
               )}
               aria-label="Grid view"
             >
@@ -75,7 +75,7 @@ function HabitsContent() {
               onClick={() => handleSetView("list")}
               className={clsx(
                 "p-2 transition-colors",
-                view === "list" ? "bg-accent/20 text-accent-light" : "text-white/35 hover:text-white/60"
+                view === "list" ? "bg-[var(--color-accent)]/20 text-[var(--color-accent-light)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
               )}
               aria-label="List view"
             >

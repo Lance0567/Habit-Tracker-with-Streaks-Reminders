@@ -44,7 +44,7 @@ export function FrequencySelector({
               "px-4 py-2 text-sm rounded-[var(--radius-md)] border transition-all duration-200",
               value === opt.value
                 ? "bg-accent/20 border-accent/50 text-accent-light shadow-glow-sm"
-                : "glass border-white/10 text-white/50 hover:border-white/20 hover:text-white/80"
+                : "glass border-[var(--glass-border)] text-[var(--text-muted)] hover:border-[var(--glass-border-hover)] hover:text-[var(--text-secondary)]"
             )}
           >
             {opt.label}
@@ -63,7 +63,7 @@ export function FrequencySelector({
                 "w-10 h-10 text-xs font-medium rounded-full border transition-all duration-200",
                 customDays.includes(i)
                   ? "bg-accent/25 border-accent/50 text-accent-light shadow-glow-sm"
-                  : "glass border-white/10 text-white/40 hover:border-white/20"
+                  : "glass border-[var(--glass-border)] text-[var(--text-muted)] hover:border-[var(--glass-border-hover)]"
               )}
             >
               {day[0]}

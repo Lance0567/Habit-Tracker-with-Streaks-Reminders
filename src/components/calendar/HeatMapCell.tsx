@@ -12,7 +12,7 @@ interface HeatMapCellProps {
 
 function getColor(level: 0 | 1 | 2 | 3 | 4, color: string): string {
   switch (level) {
-    case 0: return "rgba(255,255,255,0.04)";
+    case 0: return "var(--heatmap-empty)";
     case 1: return `${color}40`;
     case 2: return `${color}70`;
     case 3: return `${color}aa`;
@@ -46,7 +46,8 @@ export function HeatMapCell({ day, color = "#7C3AED", cellSize = 12, onHover }: 
           width={cellSize}
           height={cellSize}
           rx={2}
-          fill="rgba(255,255,255,0.08)"
+          fill="var(--heatmap-hover)"
+          style={{ opacity: 0.6 }}
         />
       )}
     </g>

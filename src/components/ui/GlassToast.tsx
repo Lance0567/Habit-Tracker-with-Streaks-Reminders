@@ -42,10 +42,11 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
       style={{ borderColor: `${config.color}30` }}
     >
       <span style={{ color: config.color }}>{config.icon}</span>
-      <p className="flex-1 text-sm text-white/85">{toast.message}</p>
+      <p className="flex-1 text-sm" style={{ color: "var(--text-primary)" }}>{toast.message}</p>
       <button
         onClick={() => onDismiss(toast.id)}
-        className="text-white/30 hover:text-white/70 transition-colors"
+        className="transition-colors"
+        style={{ color: "var(--text-muted)" }}
       >
         <X size={14} />
       </button>

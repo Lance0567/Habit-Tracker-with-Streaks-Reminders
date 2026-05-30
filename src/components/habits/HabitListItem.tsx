@@ -69,19 +69,21 @@ export function HabitListItem({
         <div className="flex-1 min-w-0">
           <Link
             href={`/habits/${habit.id}`}
-            className="text-sm font-semibold text-white/85 hover:text-white truncate block transition-colors"
+            title={habit.name}
+            className="text-sm font-semibold truncate block transition-colors hover:opacity-80"
+            style={{ color: "var(--text-primary)" }}
           >
             {habit.name}
           </Link>
           {habit.description && (
-            <p className="text-xs text-white/35 truncate">{habit.description}</p>
+            <p className="text-xs truncate" title={habit.description} style={{ color: "var(--text-muted)" }}>{habit.description}</p>
           )}
         </div>
 
         {/* Right cluster */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <StreakBadge count={streak} size="sm" />
-          <span className="text-xs tabular-nums text-white/35 w-9 text-right">
+          <span className="text-xs tabular-nums w-9 text-right" style={{ color: "var(--text-muted)" }}>
             {Math.round(completionRate)}%
           </span>
           <CheckInButton

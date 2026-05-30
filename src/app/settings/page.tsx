@@ -1,11 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Bell, Download, Trash2, Globe } from "lucide-react";
+import { Bell, Download, Trash2, Globe, Palette, Check, Moon, Sun } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GlassButton } from "@/components/ui/GlassButton";
 import { Spinner } from "@/components/ui/Spinner";
 import { useHabitStore } from "@/store/habitStore";
+import { THEME_PRESETS, getTheme } from "@/lib/themes";
 import * as storage from "@/lib/storage";
 
 export default function SettingsPage() {
@@ -59,6 +60,20 @@ export default function SettingsPage() {
     await updateSettings({ ...settings, defaultView: view });
   };
 
+  const handleAccentColor = async (accent: string) => {
+    if (!settings) return;
+    await updateSettings({ ...settings, accentColor: accent });
+  };
+
+  const handleColorMode = async (mode: "dark" | "light") => {
+    if (!settings) return;
+    await updateSettings({ ...settings, theme: mode });
+  };
+
+  const activeTheme = getTheme(settings?.accentColor);
+  const activeMode  = settings?.theme ?? "dark";
+  const isDark      = activeMode === "dark";
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -71,7 +86,7 @@ export default function SettingsPage() {
     {
       title: "Notifications",
       icon: <Bell size={16} />,
-      color: "#7C3AED",
+      color: "var(--color-accent)",
       items: [
         {
           label: "Browser Notifications",
@@ -143,6 +158,66 @@ export default function SettingsPage() {
       ],
     },
     {
+      title: "Appearance",
+      icon: <Palette size={16} />,
+      color: "var(--color-accent)",
+      items: [
+        {
+          label: "Accent Color",
+          desc: "Choose a color theme for the interface",
+          action: (
+            <div className="flex flex-wrap gap-2.5">
+              {THEME_PRESETS.map((preset) => {
+                const isSelected = activeTheme.id === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    onClick={() => handleAccentColor(preset.accent)}
+                    title={preset.name}
+                    className="relative w-8 h-8 rounded-full transition-transform duration-150 hover:scale-110 focus:outline-none"
+                    style={{
+                      backgroundColor: preset.accent,
+                      boxShadow: isSelected
+                        ? `0 0 0 2px rgba(255,255,255,0.9), 0 0 14px ${preset.accent}`
+                        : `0 0 0 1px rgba(255,255,255,0.12)`,
+                    }}
+                  >
+                    {isSelected && (
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <Check size={13} color="#fff" strokeWidth={3} />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ),
+        },
+        {
+          label: "Color Mode",
+          desc: "Switch between dark and light interface",
+          action: (
+            <div className="flex gap-2">
+              <GlassButton
+                variant={activeMode === "dark" ? "primary" : "secondary"}
+                size="sm"
+                onClick={() => handleColorMode("dark")}
+              >
+                <Moon size={13} /> Dark
+              </GlassButton>
+              <GlassButton
+                variant={activeMode === "light" ? "primary" : "secondary"}
+                size="sm"
+                onClick={() => handleColorMode("light")}
+              >
+                <Sun size={13} /> Light
+              </GlassButton>
+            </div>
+          ),
+        },
+      ],
+    },
+    {
       title: "Data",
       icon: <Download size={16} />,
       color: "#10B981",
@@ -188,8 +263,8 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl space-y-6">
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
-        <h2 className="text-2xl font-bold text-white/90">Settings</h2>
-        <p className="text-sm text-white/35 mt-0.5">Manage your app preferences and data</p>
+        <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Settings</h2>
+        <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>Manage your app preferences and data</p>
       </motion.div>
 
       {sections.map((section, si) => (
@@ -203,23 +278,23 @@ export default function SettingsPage() {
             <div
               className="flex items-center gap-2.5 px-5 py-3"
               style={{
-                backgroundColor: `${section.color}08`,
-                borderBottom: "1px solid rgba(255,255,255,0.05)",
+                backgroundColor: `${section.color}${isDark ? "0D" : "12"}`,
+                borderBottom: "1px solid var(--divider)",
               }}
             >
               <span style={{ color: section.color }}>{section.icon}</span>
-              <h3 className="text-sm font-semibold text-white/70">{section.title}</h3>
+              <h3 className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>{section.title}</h3>
             </div>
             <div>
               {section.items.map((item, idx) => (
                 <div
                   key={item.label}
                   className="flex items-center justify-between px-5 py-4 gap-4"
-                  style={idx > 0 ? { borderTop: "1px solid rgba(255,255,255,0.04)" } : {}}
+                  style={idx > 0 ? { borderTop: "1px solid var(--divider)" } : {}}
                 >
                   <div>
-                    <p className="text-sm font-medium text-white/80">{item.label}</p>
-                    <p className="text-xs text-white/35 mt-0.5">{item.desc}</p>
+                    <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{item.label}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{item.desc}</p>
                   </div>
                   {item.action}
                 </div>
@@ -229,7 +304,7 @@ export default function SettingsPage() {
         </motion.div>
       ))}
 
-      <p className="text-center text-xs text-white/20">HabitFlow v0.1.0 · Built with care</p>
+      <p className="text-center text-xs" style={{ color: "var(--text-muted)", opacity: 0.6 }}>HabitFlow v0.1.0 · Built with care</p>
     </div>
   );
 }

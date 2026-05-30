@@ -65,8 +65,8 @@ export default function CategoriesPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h2 className="text-2xl font-bold text-white/90">Categories</h2>
-          <p className="text-sm text-white/35 mt-0.5">Organize your habits by theme</p>
+          <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Categories</h2>
+          <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>Organize your habits by theme</p>
         </div>
         <GlassButton variant="primary" onClick={openCreate}>
           <Plus size={16} />
@@ -92,8 +92,8 @@ export default function CategoriesPage() {
             <Plus size={22} style={{ color: "rgba(167,139,250,0.7)" }} />
           </div>
           <div>
-            <p className="text-sm font-medium text-white/50">No categories yet</p>
-            <p className="text-xs text-white/25 mt-1">Create one to group your habits</p>
+            <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>No categories yet</p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Create one to group your habits</p>
           </div>
           <GlassButton variant="primary" size="sm" onClick={openCreate}>
             Create first category
@@ -150,8 +150,8 @@ export default function CategoriesPage() {
                     >
                       <button
                         onClick={() => openEdit(cat)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/10"
-                        style={{ color: "rgba(255,255,255,0.4)" }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[var(--glass-bg-subtle)]"
+                        style={{ color: "var(--text-muted)" }}
                         title="Edit"
                       >
                         <Pencil size={13} />
@@ -170,7 +170,7 @@ export default function CategoriesPage() {
                   {/* Name + habit count */}
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className="text-base font-semibold text-white/85">{cat.name}</p>
+                      <p className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>{cat.name}</p>
                       <div
                         className="w-8 h-0.5 rounded-full mt-1.5"
                         style={{ backgroundColor: cat.color, boxShadow: `0 0 6px ${cat.color}` }}

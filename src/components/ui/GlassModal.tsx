@@ -74,12 +74,15 @@ export function GlassModal({
             {title && (
               <div
                 className="flex items-center justify-between px-6 py-4"
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                style={{ borderBottom: "1px solid var(--divider)" }}
               >
-                <h2 className="text-base font-semibold text-white/90">{title}</h2>
+                <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>{title}</h2>
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/10 transition-all"
+                  className="p-1.5 rounded-lg transition-all"
+                  style={{ color: "var(--text-muted)" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.background = "var(--glass-bg-subtle)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.background = ""; }}
                 >
                   <X size={16} />
                 </button>

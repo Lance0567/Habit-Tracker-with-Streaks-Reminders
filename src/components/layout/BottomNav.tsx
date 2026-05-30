@@ -24,10 +24,11 @@ export function BottomNav() {
     <nav
       className="fixed bottom-0 left-0 right-0 z-40 flex md:hidden"
       style={{
-        background: "rgba(8, 5, 22, 0.96)",
+        background: "var(--nav-bg)",
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
-        borderTop: "1px solid rgba(124, 58, 237, 0.15)",
+        borderTop: "1px solid var(--nav-border)",
+        transition: "background 0.3s ease, border-color 0.3s ease",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
@@ -40,7 +41,7 @@ export function BottomNav() {
             onClick={() => setPendingHref(href)}
             className={clsx(
               "flex-1 flex flex-col items-center justify-center py-3 gap-1 transition-colors duration-200",
-              isActive ? "text-[#A78BFA]" : "text-white/30 hover:text-white/55"
+              isActive ? "text-[var(--color-accent-light)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
             )}
           >
             <div

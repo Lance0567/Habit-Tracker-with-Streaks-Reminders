@@ -122,18 +122,19 @@ export default function DashboardPage() {
         <GlassCard className="p-6">
           <div className="flex items-center gap-6">
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium uppercase tracking-widest text-white/30 mb-2">
+              <p className="text-xs font-medium uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>
                 {formatted}
               </p>
-              <h1 className="text-3xl font-black tracking-tight text-white mb-2">
+              <h1 className="text-3xl font-black tracking-tight mb-2" style={{ color: "var(--text-primary)" }}>
                 Today&apos;s Mission
               </h1>
-              <p className="text-sm text-white/50 mb-4">{motivationalCopy(pct)}</p>
+              <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>{motivationalCopy(pct)}</p>
               <span
                 className="inline-block text-xs font-mono px-2.5 py-1 rounded-full"
                 style={{
-                  background: "rgba(255,255,255,0.06)",
-                  color: "rgba(255,255,255,0.45)",
+                  background: "var(--glass-bg-subtle)",
+                  color: "var(--text-muted)",
+                  border: "1px solid var(--divider)",
                 }}
               >
                 {totalHabits} active habits
@@ -148,7 +149,7 @@ export default function DashboardPage() {
                   {overallRate}%
                 </span>
               </ProgressRing>
-              <p className="text-xs text-white/30 tabular-nums">
+              <p className="text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
                 {completedCount} of {totalHabits}
               </p>
             </div>
@@ -176,10 +177,10 @@ export default function DashboardPage() {
                 {s.icon}
               </span>
               <div className="min-w-0">
-                <p className="text-lg font-bold tabular-nums text-white/90 leading-none">
+                <p className="text-lg font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
                   {s.value}
                 </p>
-                <p className="text-xs text-white/35 mt-0.5 truncate">{s.label}</p>
+                <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text-muted)" }}>{s.label}</p>
               </div>
             </GlassCard>
           </motion.div>
@@ -193,22 +194,21 @@ export default function DashboardPage() {
         transition={{ delay: 0.32, duration: 0.35 }}
       >
         <GlassCard className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-white/30 mb-3">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
             This Week
           </p>
           <div className="grid grid-cols-7 gap-2">
             {weekDays.map((day, i) => (
               <div key={i} className="flex flex-col items-center gap-1.5">
                 <span
-                  className={`text-xs font-semibold ${
-                    day.isToday ? "text-white" : "text-white/30"
-                  }`}
+                  className="text-xs font-semibold"
+                  style={{ color: day.isToday ? "var(--text-primary)" : "var(--text-muted)" }}
                 >
                   {day.label}
                 </span>
                 <div
                   className="w-full rounded-full overflow-hidden relative"
-                  style={{ height: 40, background: "rgba(255,255,255,0.05)" }}
+                  style={{ height: 40, background: "var(--divider)" }}
                 >
                   <div
                     className="absolute bottom-0 left-0 right-0 rounded-full"
@@ -217,21 +217,20 @@ export default function DashboardPage() {
                       background: day.isToday
                         ? color
                         : day.isPast && day.pct > 0
-                        ? "rgba(255,255,255,0.18)"
+                        ? "var(--glass-border)"
                         : "transparent",
                       transition: "height 0.5s cubic-bezier(0.4,0,0.2,1)",
                     }}
                   />
                 </div>
                 <span
-                  className={`text-xs tabular-nums ${
-                    day.isToday ? "text-white/70" : "text-white/25"
-                  }`}
+                  className="text-xs tabular-nums"
+                  style={{ color: day.isToday ? "var(--text-secondary)" : "var(--text-muted)" }}
                 >
                   {day.isToday || day.isPast ? `${Math.round(day.pct * 100)}%` : "—"}
                 </span>
                 {day.isToday && (
-                  <span className="w-1 h-1 rounded-full bg-white/60" />
+                  <span className="w-1 h-1 rounded-full" style={{ background: "var(--text-secondary)" }} />
                 )}
               </div>
             ))}
@@ -246,7 +245,7 @@ export default function DashboardPage() {
         transition={{ delay: 0.4, duration: 0.35 }}
       >
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-semibold text-white/80">Today&apos;s Habits</h3>
+          <h3 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>Today&apos;s Habits</h3>
           <motion.span
             className="text-xs font-bold px-2 py-0.5 rounded-full tabular-nums"
             animate={{ color, backgroundColor: `${color}25` }}
