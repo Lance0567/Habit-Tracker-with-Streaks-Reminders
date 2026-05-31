@@ -5,10 +5,11 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { addDays, format, startOfDay, isBefore } from "date-fns";
-import { ArrowLeft, Check, Lock, Play, Trophy, RotateCcw, ChevronDown, Calendar, Bookmark, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Check, Lock, Play, Trophy, RotateCcw, ChevronDown, Calendar, Bookmark, AlertTriangle, Bell, BellOff } from "lucide-react";
 import { PROGRAMS, totalTasks } from "@/lib/programs";
 import {
   getUserProgram,
+  getUserPrograms,
   enrollProgram,
   updateProgramProgress,
   unenrollProgram,
@@ -16,6 +17,7 @@ import {
   saveProgram,
   unsaveProgram,
 } from "@/lib/storage";
+import { getProgramReminderTime, setProgramReminderTime, scheduleProgramReminders } from "@/lib/notifications";
 import { Spinner } from "@/components/ui/Spinner";
 import type { UserProgram } from "@/types";
 
@@ -37,6 +39,9 @@ function ProgramDetailContent() {
   const [selectedDay, setSelectedDay] = useState(1);
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [reminderTime, setReminderTime] = useState<string | null>(null);
+  const [showReminderPicker, setShowReminderPicker] = useState(false);
+  const [pickerValue, setPickerValue] = useState("09:00");
   const prevActive = useRef(1);
 
   useEffect(() => {
@@ -46,6 +51,7 @@ function ProgramDetailContent() {
       .catch(() => {})
       .finally(() => setLoading(false));
     getSavedPrograms().then((ids) => setSaved(ids.includes(program.id))).catch(() => {});
+    setReminderTime(getProgramReminderTime(program.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [program?.id]);
 
@@ -184,22 +190,84 @@ function ProgramDetailContent() {
         className="relative overflow-hidden rounded-3xl px-6 py-6"
         style={{ background: `linear-gradient(135deg, ${program.color}26 0%, ${program.color}0A 70%, var(--glass-bg-subtle) 100%)`, border: `1px solid ${program.color}26` }}
       >
-        {/* Bookmark toggle */}
-        <button
-          onClick={toggleSaved}
-          className="absolute top-5 right-5 w-9 h-9 rounded-xl flex items-center justify-center transition-all z-10"
-          style={
-            saved
-              ? { background: `${program.color}1A`, border: `1px solid ${program.color}40`, color: program.color }
-              : { background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)", color: "var(--text-muted)" }
-          }
-          aria-label={saved ? "Remove from saved" : "Save plan"}
-          title={saved ? "Saved" : "Save for later"}
-        >
-          <Bookmark size={16} fill={saved ? program.color : "none"} />
-        </button>
+        {/* Header action buttons — bell + bookmark */}
+        <div className="absolute top-5 right-5 flex items-center gap-2 z-10">
+          {/* Reminder bell */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                if (reminderTime) {
+                  setProgramReminderTime(program.id, null);
+                  setReminderTime(null);
+                } else {
+                  setShowReminderPicker(true);
+                }
+              }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+              style={
+                reminderTime
+                  ? { background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.40)", color: "var(--color-accent)", backdropFilter: "blur(12px)" }
+                  : { background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)", color: "var(--text-muted)", backdropFilter: "blur(12px)" }
+              }
+              aria-label={reminderTime ? `Reminder set at ${reminderTime} — click to remove` : "Set daily reminder"}
+              title={reminderTime ? `Reminder at ${reminderTime} — click to remove` : "Set daily reminder"}
+            >
+              {reminderTime ? <Bell size={15} /> : <BellOff size={15} />}
+            </button>
 
-        <div className="flex items-center gap-3 mb-3 flex-wrap pr-12">
+            {showReminderPicker && (
+              <div
+                className="absolute top-11 right-0 z-20 rounded-xl p-3 flex flex-col gap-2"
+                style={{ background: "var(--popup-bg)", border: "1px solid var(--popup-border)", boxShadow: "0 8px 32px rgba(0,0,0,0.35)", minWidth: 168 }}
+              >
+                <p className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>Daily reminder time</p>
+                <input
+                  type="time"
+                  value={pickerValue}
+                  onChange={(e) => setPickerValue(e.target.value)}
+                  className="w-full rounded-lg px-2 py-1 text-xs font-mono outline-none"
+                  style={{ background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)", color: "var(--text-primary)" }}
+                />
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => setShowReminderPicker(false)}
+                    className="flex-1 text-[11px] py-1 rounded-lg"
+                    style={{ background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)", color: "var(--text-muted)" }}
+                  >Cancel</button>
+                  <button
+                    onClick={() => {
+                      setProgramReminderTime(program.id, pickerValue);
+                      setReminderTime(pickerValue);
+                      setShowReminderPicker(false);
+                      getUserPrograms()
+                        .then((ups) => scheduleProgramReminders(ups, PROGRAMS))
+                        .catch(() => {});
+                    }}
+                    className="flex-1 text-[11px] py-1 rounded-lg font-semibold"
+                    style={{ background: "var(--color-accent)", color: "#fff" }}
+                  >Set</button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Bookmark toggle */}
+          <button
+            onClick={toggleSaved}
+            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+            style={
+              saved
+                ? { background: `${program.color}1A`, border: `1px solid ${program.color}40`, color: program.color }
+                : { background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)", color: "var(--text-muted)" }
+            }
+            aria-label={saved ? "Remove from saved" : "Save plan"}
+            title={saved ? "Saved" : "Save for later"}
+          >
+            <Bookmark size={16} fill={saved ? program.color : "none"} />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 mb-3 flex-wrap pr-24">
           <span className="text-3xl">{program.emoji}</span>
           <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full"
             style={{ background: `${program.color}18`, color: program.color, border: `1px solid ${program.color}30` }}>
