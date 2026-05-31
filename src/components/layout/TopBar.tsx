@@ -8,6 +8,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { UserAvatar } from "@/components/layout/UserAvatar";
 import { useUIStore } from "@/store/uiStore";
 import { useHabitStore } from "@/store/habitStore";
+import { useUser } from "@/hooks/useUser";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -24,6 +25,7 @@ export function TopBar() {
   const updateSettings = useHabitStore((s) => s.updateSettings);
 
   const isDark = (settings?.theme ?? "dark") === "dark";
+  const { firstName } = useUser();
 
   async function toggleTheme() {
     if (!settings) return;
@@ -46,7 +48,7 @@ export function TopBar() {
           {format(today, "EEEE, MMMM d")}
         </p>
         <h1 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-          {getGreeting()}
+          {getGreeting()}{firstName ? `, ${firstName}!` : ""}
         </h1>
       </div>
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, CheckSquare, BarChart3, Tag, Settings } from "lucide-react";
+import { LayoutDashboard, CheckSquare, BarChart3, Compass, Tag, Settings } from "lucide-react";
 import { clsx } from "clsx";
 import { useState, useEffect } from "react";
 
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/habits", icon: CheckSquare, label: "Habits" },
   { href: "/analytics", icon: BarChart3, label: "Analytics" },
+  { href: "/explore", icon: Compass, label: "Explore" },
   { href: "/categories", icon: Tag, label: "Categories" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
