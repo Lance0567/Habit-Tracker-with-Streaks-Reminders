@@ -29,6 +29,23 @@ type NavItem = {
 
 type TooltipState = { label: string; color: string; y: number } | null;
 
+function SectionDivider({ collapsed, label }: { collapsed: boolean; label: string }) {
+  if (collapsed) {
+    return <div className="mx-3 my-2 h-px" style={{ background: "var(--divider)" }} />;
+  }
+  return (
+    <div className="flex items-center gap-2.5 pl-5 pr-3 pt-3 pb-1.5">
+      <span
+        className="text-[9px] font-bold tracking-[0.22em] uppercase whitespace-nowrap flex-shrink-0"
+        style={{ color: "var(--text-muted)", opacity: 0.5 }}
+      >
+        {label}
+      </span>
+      <div className="flex-1 h-px" style={{ background: "var(--divider)", opacity: 0.7 }} />
+    </div>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const collapsed = useUIStore((s) => s.sidebarCollapsed);
@@ -60,59 +77,62 @@ export function Sidebar() {
 
     return (
       <Link key={href} href={href} onClick={() => setPendingHref(href)}>
-        <div
+        <motion.div
+          whileHover={!collapsed ? { x: 2 } : {}}
+          transition={{ duration: 0.12, ease: "easeOut" }}
           className={clsx(
-            "relative flex items-center py-2.5 rounded-r-[var(--radius-md)] cursor-pointer transition-colors duration-200 group",
-            collapsed ? "justify-center" : "pl-5 pr-3 gap-3"
+            "relative flex items-center cursor-pointer transition-colors duration-200 group",
+            collapsed
+              ? "justify-center py-1.5 mx-2"
+              : "mx-2 px-2.5 py-2 rounded-xl gap-2.5"
           )}
-          style={{ backgroundColor: isActive ? `${color}0D` : undefined }}
+          style={
+            !collapsed
+              ? {
+                  borderRadius: 12,
+                  backgroundColor: isActive ? `${color}0E` : undefined,
+                  boxShadow: isActive ? `inset 3px 0 0 ${color}` : undefined,
+                }
+              : undefined
+          }
           onMouseEnter={(e) => {
-            if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = "var(--glass-bg-subtle)";
+            if (!isActive && !collapsed) {
+              (e.currentTarget as HTMLElement).style.backgroundColor = "var(--glass-bg-subtle)";
+            }
             if (collapsed) {
-              const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
               setTooltip({ label, color, y: rect.top + rect.height / 2 });
             }
           }}
           onMouseLeave={(e) => {
-            if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = "";
+            if (!isActive && !collapsed) {
+              (e.currentTarget as HTMLElement).style.backgroundColor = "";
+            }
             setTooltip(null);
           }}
         >
-          {/* Left accent bar */}
+          {/* Icon badge — always contained, scales between collapsed/expanded */}
           <div
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-8 rounded-r-full transition-all duration-200"
+            className="flex items-center justify-center flex-shrink-0 transition-all duration-200"
             style={{
-              backgroundColor: color,
-              boxShadow: `0 0 10px ${color}80`,
-              opacity: isActive ? 1 : 0,
+              width: collapsed ? 40 : 32,
+              height: collapsed ? 40 : 32,
+              borderRadius: collapsed ? 12 : 8,
+              backgroundColor: isActive ? `${color}1C` : "transparent",
+              border: `1px solid ${isActive ? `${color}35` : "transparent"}`,
+              boxShadow: isActive && collapsed ? `0 0 14px ${color}28` : undefined,
             }}
-          />
-
-          {/* Icon */}
-          {collapsed ? (
-            <div
-              className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0 transition-all duration-200"
-              style={isActive ? { backgroundColor: `${color}20`, border: `1px solid ${color}40` } : undefined}
-            >
-              <Icon
-                size={18}
-                className={clsx(
-                  "transition-colors duration-200",
-                  !isActive && "text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]"
-                )}
-                style={isActive ? { color, filter: `drop-shadow(0 0 6px ${color})` } : undefined}
-              />
-            </div>
-          ) : (
+          >
             <Icon
-              size={18}
-              className={clsx(
-                "flex-shrink-0 transition-colors duration-200",
-                !isActive && "text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]"
-              )}
-              style={isActive ? { color, filter: `drop-shadow(0 0 6px ${color})` } : undefined}
+              size={collapsed ? 18 : 16}
+              style={
+                isActive
+                  ? { color, filter: `drop-shadow(0 0 5px ${color}90)` }
+                  : { color: "var(--text-muted)" }
+              }
+              className={!isActive ? "group-hover:text-[var(--text-secondary)] transition-colors duration-200" : ""}
             />
-          )}
+          </div>
 
           {/* Label + active dot (expanded only) */}
           <AnimatePresence>
@@ -121,12 +141,12 @@ export function Sidebar() {
                 initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -6 }}
-                transition={{ duration: 0.18 }}
+                transition={{ duration: 0.15 }}
                 className="flex items-center justify-between flex-1 min-w-0"
               >
                 <span
                   className={clsx(
-                    "text-sm whitespace-nowrap transition-colors duration-200",
+                    "text-[13px] whitespace-nowrap transition-colors duration-200",
                     isActive
                       ? "font-semibold text-[var(--text-primary)]"
                       : "font-medium text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]"
@@ -135,10 +155,10 @@ export function Sidebar() {
                   {label}
                 </span>
                 {isActive && (
-                  <motion.span
+                  <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 22 }}
                     className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                     style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }}
                   />
@@ -146,7 +166,7 @@ export function Sidebar() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </Link>
     );
   };
@@ -162,39 +182,50 @@ export function Sidebar() {
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
           borderRight: "1px solid var(--nav-border)",
-          transition: "background 0.3s ease, border-color 0.3s ease",
         }}
       >
+        {/* Top accent glow — "lit from above" atmosphere */}
+        <div
+          className="absolute top-0 left-0 right-0 h-32 pointer-events-none"
+          style={{
+            background: `radial-gradient(ellipse at 50% -10%, ${accentColor}18 0%, transparent 72%)`,
+          }}
+        />
+
         {/* Logo */}
         <div
-          className="flex items-center gap-3 px-4 py-5 flex-shrink-0"
+          className={clsx(
+            "relative flex items-center flex-shrink-0",
+            collapsed ? "justify-center py-5" : "px-4 py-5 gap-3"
+          )}
           style={{ borderBottom: "1px solid var(--divider)" }}
         >
+          {/* App icon */}
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={
-              isDark
-                ? {
-                    background: "rgba(124,58,237,0.18)",
-                    border: "1px solid rgba(124,58,237,0.35)",
-                    boxShadow: "0 0 16px rgba(124,58,237,0.18)",
-                  }
-                : {
-                    background: "linear-gradient(135deg, var(--color-accent) 0%, #9333EA 100%)",
-                    border: "1px solid rgba(124,58,237,0.30)",
-                    boxShadow: "0 2px 8px rgba(124,58,237,0.25)",
-                  }
-            }
+            className="flex items-center justify-center flex-shrink-0"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              background: isDark
+                ? `linear-gradient(135deg, ${accentColor}2C 0%, ${accentColor}0F 100%)`
+                : `linear-gradient(135deg, ${accentColor} 0%, #9333EA 100%)`,
+              border: `1px solid ${accentColor}${isDark ? "3A" : "28"}`,
+              boxShadow: isDark
+                ? `0 0 20px ${accentColor}18`
+                : `0 3px 12px ${accentColor}32`,
+            }}
           >
             <Zap
-              size={18}
+              size={16}
               style={{
-                color: isDark ? "var(--color-accent-light)" : "#ffffff",
-                filter: isDark ? "drop-shadow(0 0 8px var(--color-accent))" : "none",
+                color: isDark ? accentColor : "#fff",
+                filter: isDark ? `drop-shadow(0 0 8px ${accentColor})` : "none",
               }}
             />
           </div>
 
+          {/* Brand name */}
           <AnimatePresence>
             {!collapsed && (
               <motion.div
@@ -204,10 +235,15 @@ export function Sidebar() {
                 transition={{ duration: 0.18 }}
                 className="whitespace-nowrap overflow-hidden"
               >
-                <span className="text-sm font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Habit</span>
+                <span
+                  className="text-sm font-semibold tracking-tight"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  Habit
+                </span>
                 <span
                   className="text-sm font-bold tracking-tight"
-                  style={{ color: isDark ? "var(--color-accent-light)" : "var(--color-accent)" }}
+                  style={{ color: accentColor }}
                 >
                   Flow
                 </span>
@@ -217,53 +253,28 @@ export function Sidebar() {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 py-3 space-y-0.5 overflow-y-auto overflow-x-hidden">
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="pl-5 pt-1 pb-1.5 text-[10px] font-bold tracking-[0.12em] uppercase select-none"
-                style={{ color: "var(--text-muted)", opacity: 0.6 }}
-              >
-                Main
-              </motion.p>
-            )}
-          </AnimatePresence>
+        <nav className="flex flex-col flex-1 py-2 overflow-y-auto overflow-x-hidden">
+          {/* Main group */}
+          <SectionDivider collapsed={collapsed} label="Main" />
+          <div className="flex flex-col gap-0.5">
+            {mainItems.map(renderItem)}
+          </div>
 
-          {mainItems.map(renderItem)}
-
-          <div className="pt-2">
-            <div className="h-px mb-2" style={{ background: "var(--divider)" }} />
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="pl-5 pb-1.5 text-[10px] font-bold tracking-[0.12em] uppercase select-none"
-                  style={{ color: "var(--text-muted)", opacity: 0.6 }}
-                >
-                  System
-                </motion.p>
-              )}
-            </AnimatePresence>
+          {/* System group */}
+          <SectionDivider collapsed={collapsed} label="System" />
+          <div className="flex flex-col gap-0.5">
             {systemItems.map(renderItem)}
           </div>
         </nav>
-
       </motion.aside>
 
-      {/* Floating collapse toggle — portal so overflow:hidden on aside can't clip it */}
+      {/* ── Floating collapse toggle (portal, clears overflow:hidden) ────────── */}
       {mounted && createPortal(
         <motion.button
           onClick={toggleSidebar}
           animate={{ left: collapsed ? 58 : 226 }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="fixed z-[9998] top-[68px] flex items-center justify-center focus:outline-none group"
+          className="fixed z-[9998] top-[68px] flex items-center justify-center focus:outline-none"
           style={{
             width: 28,
             height: 28,
@@ -279,14 +290,16 @@ export function Sidebar() {
             cursor: "pointer",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = accentColor + "80";
-            (e.currentTarget as HTMLButtonElement).style.color = accentColor;
-            (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 2px 16px ${accentColor}30, 0 0 0 1px ${accentColor}20`;
+            const b = e.currentTarget as HTMLButtonElement;
+            b.style.borderColor = `${accentColor}80`;
+            b.style.color = accentColor;
+            b.style.boxShadow = `0 2px 16px ${accentColor}30`;
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = "";
-            (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)";
-            (e.currentTarget as HTMLButtonElement).style.boxShadow = isDark
+            const b = e.currentTarget as HTMLButtonElement;
+            b.style.borderColor = "";
+            b.style.color = "var(--text-muted)";
+            b.style.boxShadow = isDark
               ? "0 2px 12px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05)"
               : "0 2px 10px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.8)";
           }}
@@ -302,7 +315,7 @@ export function Sidebar() {
         document.body
       )}
 
-      {/* Collapse-mode tooltip — portal to escape overflow:hidden on the aside */}
+      {/* ── Collapsed-mode tooltip (portal, escapes overflow:hidden) ─────────── */}
       {mounted && createPortal(
         <AnimatePresence>
           {collapsed && tooltip && (
@@ -315,7 +328,7 @@ export function Sidebar() {
               className="fixed z-[9999] pointer-events-none flex items-center gap-1.5"
               style={{ left: 80, top: tooltip.y, transform: "translateY(-50%)" }}
             >
-              {/* Arrow nub pointing left */}
+              {/* Arrow nub */}
               <div
                 className="w-[6px] h-[6px] rotate-45"
                 style={{
