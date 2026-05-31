@@ -81,6 +81,14 @@ export interface HeatMapDay {
   level: 0 | 1 | 2 | 3 | 4;
 }
 
+export interface UserProgram {
+  id: string;
+  programId: string;
+  startedAt: string;
+  currentDay: number;
+  completedAt: string | null;
+}
+
 export interface AppSettings {
   notificationsEnabled: boolean;
   swRegistered: boolean;

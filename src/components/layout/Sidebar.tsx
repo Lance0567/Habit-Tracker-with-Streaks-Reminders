@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   CheckSquare,
   BarChart3,
+  Compass,
   Tag,
   Settings,
   Zap,
@@ -45,6 +46,7 @@ export function Sidebar() {
     { href: "/dashboard",  icon: LayoutDashboard, label: "Dashboard",  color: "#06B6D4",   group: "MAIN"   },
     { href: "/habits",     icon: CheckSquare,      label: "Habits",     color: accentColor, group: "MAIN"   },
     { href: "/analytics",  icon: BarChart3,        label: "Analytics",  color: "#F59E0B",   group: "MAIN"   },
+    { href: "/explore",    icon: Compass,          label: "Explore",    color: "#EC4899",   group: "MAIN"   },
     { href: "/categories", icon: Tag,              label: "Categories", color: "#10B981",   group: "SYSTEM" },
     { href: "/settings",   icon: Settings,         label: "Settings",   color: "#94A3B8",   group: "SYSTEM" },
   ];
