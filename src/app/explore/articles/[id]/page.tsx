@@ -82,13 +82,6 @@ export default function ArticleDetailPage() {
           </ul>
         </div>
       </article>
-
-      {/* Bottom back link */}
-      <div className="pt-2">
-        <Link href="/explore?tab=articles" className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: "var(--color-accent-light)" }}>
-          <ArrowLeft size={14} /> Back to Explore
-        </Link>
-      </div>
     </div>
   );
 }

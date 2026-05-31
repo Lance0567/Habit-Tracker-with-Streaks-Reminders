@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { addDays, format, startOfDay, isBefore } from "date-fns";
@@ -25,9 +25,11 @@ const DIFFICULTY_COLOR: Record<string, string> = {
   Hard:     "#F43F5E",
 };
 
-export default function ProgramDetailPage() {
+function ProgramDetailContent() {
   const params = useParams();
   const id = params.id as string;
+  const fromParam = useSearchParams().get("from");
+  const backHref = `/explore?tab=programs${fromParam ? `&plans=${fromParam}` : ""}`;
   const program = PROGRAMS.find((p) => p.id === id) ?? null;
 
   const [enrollment, setEnrollment] = useState<UserProgram | null>(null);
@@ -150,7 +152,7 @@ export default function ProgramDetailPage() {
     return (
       <div className="max-w-3xl mx-auto text-center py-20">
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>Program not found.</p>
-        <Link href="/explore?tab=programs" className="text-sm font-semibold mt-3 inline-block" style={{ color: "var(--color-accent-light)" }}>
+        <Link href={backHref} className="text-sm font-semibold mt-3 inline-block" style={{ color: "var(--color-accent-light)" }}>
           ← Back to Explore
         </Link>
       </div>
@@ -168,7 +170,7 @@ export default function ProgramDetailPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Back */}
       <Link
-        href="/explore?tab=programs"
+        href={backHref}
         className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
         style={{ color: "var(--text-muted)" }}
         onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-primary)"; }}
@@ -421,5 +423,13 @@ export default function ProgramDetailPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProgramDetailPage() {
+  return (
+    <Suspense>
+      <ProgramDetailContent />
+    </Suspense>
   );
 }

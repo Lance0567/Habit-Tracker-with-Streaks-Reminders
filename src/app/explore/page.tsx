@@ -34,12 +34,14 @@ function ProgramCard({
   program,
   enrollment,
   featured,
+  from,
 }: {
   program: (typeof PROGRAMS)[number];
   enrollment?: UserProgram;
   featured?: boolean;
+  from?: ProgramSubTab;
 }) {
-  const href = `/explore/programs/${program.id}`;
+  const href = `/explore/programs/${program.id}${from ? `?from=${from}` : ""}`;
   const isCompleted = !!enrollment?.completedAt;
   const inProgress  = !!enrollment && !isCompleted;
   const completedSet = new Set(enrollment?.completedTasks ?? []);
@@ -214,8 +216,13 @@ function ArticleCard({ article }: { article: (typeof ARTICLES)[number] }) {
 function ExploreContent() {
   const searchParams = useSearchParams();
   const initialTab: Tab = searchParams.get("tab") === "articles" ? "articles" : "programs";
+  const plansParam = searchParams.get("plans");
+  const initialSubTab: ProgramSubTab =
+    plansParam === "my" || plansParam === "saved" || plansParam === "completed" || plansParam === "find"
+      ? plansParam
+      : "find";
   const [tab, setTab] = useState<Tab>(initialTab);
-  const [subTab, setSubTab] = useState<ProgramSubTab>("find");
+  const [subTab, setSubTab] = useState<ProgramSubTab>(initialSubTab);
   const [categoryFilter, setCategoryFilter] = useState<ArticleCategory | "All">("All");
   const [enrolledMap, setEnrolledMap] = useState<Record<string, UserProgram>>({});
   const [savedIds, setSavedIds] = useState<string[]>([]);
@@ -321,14 +328,14 @@ function ExploreContent() {
 
             {/* Featured only on Find Plans */}
             {subTab === "find" && featuredProgram && (
-              <ProgramCard program={featuredProgram} enrollment={enrolledMap[featuredProgram.id]} featured />
+              <ProgramCard program={featuredProgram} enrollment={enrolledMap[featuredProgram.id]} featured from={subTab} />
             )}
 
             {findGridPrograms.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {findGridPrograms.map((program, i) => (
                   <motion.div key={program.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 + i * 0.06 }}>
-                    <ProgramCard program={program} enrollment={enrolledMap[program.id]} />
+                    <ProgramCard program={program} enrollment={enrolledMap[program.id]} from={subTab} />
                   </motion.div>
                 ))}
               </div>
