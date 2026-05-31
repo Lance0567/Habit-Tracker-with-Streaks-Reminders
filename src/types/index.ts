@@ -86,6 +86,7 @@ export interface UserProgram {
   programId: string;
   startedAt: string;
   currentDay: number;
+  completedTasks: string[];
   completedAt: string | null;
 }
 

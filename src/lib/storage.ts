@@ -237,11 +237,12 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
 
 function rowToUserProgram(row: any): UserProgram {
   return {
-    id:          row.id,
-    programId:   row.program_id,
-    startedAt:   row.started_at,
-    currentDay:  row.current_day,
-    completedAt: row.completed_at ?? null,
+    id:             row.id,
+    programId:      row.program_id,
+    startedAt:      row.started_at,
+    currentDay:     row.current_day,
+    completedTasks: row.completed_tasks ?? [],
+    completedAt:    row.completed_at ?? null,
   };
 }
 
@@ -255,12 +256,55 @@ export async function getUserPrograms(): Promise<UserProgram[]> {
   return (data ?? []).map(rowToUserProgram);
 }
 
+export async function getUserProgram(programId: string): Promise<UserProgram | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_programs")
+    .select("*")
+    .eq("program_id", programId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? rowToUserProgram(data) : null;
+}
+
+// ── Saved programs (bookmarks) ────────────────────────────────────────────────
+
+export async function getSavedPrograms(): Promise<string[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase.from("saved_programs").select("program_id");
+    if (error) throw error;
+    return (data ?? []).map((r) => r.program_id as string);
+  } catch {
+    // Table may not exist yet — fail soft so the UI still works.
+    return [];
+  }
+}
+
+export async function saveProgram(programId: string): Promise<void> {
+  const userId = await getUserId();
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("saved_programs")
+    .upsert({ user_id: userId, program_id: programId });
+  if (error) throw error;
+}
+
+export async function unsaveProgram(programId: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("saved_programs")
+    .delete()
+    .eq("program_id", programId);
+  if (error) throw error;
+}
+
 export async function enrollProgram(programId: string): Promise<UserProgram> {
   const userId = await getUserId();
   const supabase = createClient();
   const { data, error } = await supabase
     .from("user_programs")
-    .insert({ user_id: userId, program_id: programId, current_day: 1 })
+    .insert({ user_id: userId, program_id: programId, current_day: 1, completed_tasks: [] })
     .select()
     .single();
   if (error) throw error;
@@ -272,6 +316,20 @@ export async function updateProgramDay(programId: string, day: number): Promise<
   const { error } = await supabase
     .from("user_programs")
     .update({ current_day: day })
+    .eq("program_id", programId);
+  if (error) throw error;
+}
+
+export async function updateProgramProgress(
+  programId: string,
+  completedTasks: string[],
+  currentDay: number,
+  completedAt: string | null
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("user_programs")
+    .update({ completed_tasks: completedTasks, current_day: currentDay, completed_at: completedAt })
     .eq("program_id", programId);
   if (error) throw error;
 }
