@@ -4,18 +4,19 @@ import { Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { BookOpen, Layers, CheckCircle, Clock, ChevronRight, Calendar } from "lucide-react";
+import { BookOpen, Layers, CheckCircle, Clock, ChevronRight, Calendar, Bell, BellOff } from "lucide-react";
 import { PROGRAMS, totalTasks } from "@/lib/programs";
 import { ARTICLES, type ArticleCategory } from "@/lib/articles";
 import { getUserPrograms, getSavedPrograms } from "@/lib/storage";
+import { getProgramReminderTime, setProgramReminderTime, scheduleProgramReminders } from "@/lib/notifications";
 import type { UserProgram } from "@/types";
 
 type Tab = "programs" | "articles";
 type ProgramSubTab = "my" | "find" | "saved" | "completed";
 
 const SUB_TABS: { key: ProgramSubTab; label: string }[] = [
-  { key: "my",        label: "My Plans" },
-  { key: "find",      label: "Find Plans" },
+  { key: "my",        label: "My Programs" },
+  { key: "find",      label: "Find Programs" },
   { key: "saved",     label: "Saved" },
   { key: "completed", label: "Completed" },
 ];
@@ -44,6 +45,39 @@ function ProgramCard({
   const href = `/explore/programs/${program.id}${from ? `?from=${from}` : ""}`;
   const isCompleted = !!enrollment?.completedAt;
   const inProgress  = !!enrollment && !isCompleted;
+
+  // Reminder state — only relevant on My Plans cards
+  const [reminderTime, setReminderTime] = useState<string | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
+  const [pickerValue, setPickerValue] = useState("09:00");
+
+  useEffect(() => {
+    if (from === "my") setReminderTime(getProgramReminderTime(program.id));
+  }, [from, program.id]);
+
+  function handleBellClick(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (reminderTime) {
+      setProgramReminderTime(program.id, null);
+      setReminderTime(null);
+    } else {
+      setShowPicker(true);
+    }
+  }
+
+  function handleSetReminder(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setProgramReminderTime(program.id, pickerValue);
+    setReminderTime(pickerValue);
+    setShowPicker(false);
+    if (enrollment) {
+      getUserPrograms()
+        .then((ups) => scheduleProgramReminders(ups, PROGRAMS))
+        .catch(() => {});
+    }
+  }
   const completedSet = new Set(enrollment?.completedTasks ?? []);
   const isDayDone = (d: number) => program.days[d - 1].tasks.every((t) => completedSet.has(`${d}:${t.id}`));
   let activeDay = program.duration;
@@ -90,7 +124,7 @@ function ProgramCard({
               {program.difficulty}
             </span>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-              style={{ background: "rgba(124,58,237,0.15)", color: "var(--color-accent-light)", border: "1px solid rgba(124,58,237,0.25)" }}>
+              style={{ background: "rgba(124,58,237,0.18)", color: "var(--color-accent)", border: "1px solid rgba(124,58,237,0.45)" }}>
               Featured
             </span>
           </div>
@@ -156,7 +190,68 @@ function ProgramCard({
       )}
       <div className="flex items-center justify-between">
         {statusBadge}
-        <ChevronRight size={14} style={{ color: "var(--text-muted)" }} />
+        <div className="flex items-center gap-1.5">
+          {from === "my" && (
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={handleBellClick}
+                title={reminderTime ? `Reminder at ${reminderTime} — click to remove` : "Set daily reminder"}
+                className="w-6 h-6 flex items-center justify-center rounded-lg transition-all"
+                style={{
+                  background: reminderTime ? "rgba(124,58,237,0.15)" : "var(--glass-bg-subtle)",
+                  border: `1px solid ${reminderTime ? "rgba(124,58,237,0.35)" : "var(--glass-border)"}`,
+                  color: reminderTime ? "var(--color-accent)" : "var(--text-muted)",
+                }}
+              >
+                {reminderTime ? <Bell size={11} /> : <BellOff size={11} />}
+              </button>
+              {showPicker && (
+                <div
+                  className="absolute bottom-8 right-0 z-20 rounded-xl p-3 flex flex-col gap-2"
+                  style={{
+                    background: "var(--popup-bg)",
+                    border: "1px solid var(--popup-border)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
+                    minWidth: 160,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <p className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>
+                    Daily reminder time
+                  </p>
+                  <input
+                    type="time"
+                    value={pickerValue}
+                    onChange={(e) => setPickerValue(e.target.value)}
+                    className="w-full rounded-lg px-2 py-1 text-xs font-mono outline-none"
+                    style={{
+                      background: "var(--glass-bg-subtle)",
+                      border: "1px solid var(--glass-border)",
+                      color: "var(--text-primary)",
+                    }}
+                  />
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowPicker(false); }}
+                      className="flex-1 text-[11px] py-1 rounded-lg"
+                      style={{ background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)", color: "var(--text-muted)" }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSetReminder}
+                      className="flex-1 text-[11px] py-1 rounded-lg font-semibold"
+                      style={{ background: "var(--color-accent)", color: "#fff" }}
+                    >
+                      Set
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <ChevronRight size={14} style={{ color: "var(--text-muted)" }} />
+        </div>
       </div>
     </Link>
   );
