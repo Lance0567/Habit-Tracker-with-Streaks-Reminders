@@ -29,8 +29,12 @@ export function ThemeProvider() {
     // Apply dark / light data attribute (triggers CSS variable overrides in globals.css)
     const mode = isDark ? "dark" : "light";
     root.setAttribute("data-theme", mode);
-    // Keep localStorage in sync so the blocking head script sees the right value next load
+    // Persist to localStorage (legacy fallback) AND a cookie so the server can
+    // stamp data-theme on the initial <html> byte — eliminating any flash on refresh.
     try { localStorage.setItem("habitflow-theme", mode); } catch (_) {}
+    try {
+      document.cookie = `habitflow-theme=${mode}; path=/; max-age=31536000; SameSite=Lax`;
+    } catch (_) {}
 
     // Core accent vars — glow is dimmed in light mode to avoid overwhelming white surfaces
     root.style.setProperty("--color-accent",       theme.accent);
