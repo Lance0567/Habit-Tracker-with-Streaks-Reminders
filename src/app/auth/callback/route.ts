@@ -5,7 +5,15 @@ import { createServerClient } from "@supabase/ssr";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const errorParam = searchParams.get("error");
   const next = searchParams.get("next") ?? "/dashboard";
+
+  // Supabase/Google may redirect with an error parameter before reaching our code exchange
+  if (errorParam) {
+    return NextResponse.redirect(
+      `${origin}/auth?error=${encodeURIComponent(errorParam)}`
+    );
+  }
 
   if (code) {
     const response = NextResponse.redirect(`${origin}${next}`);
@@ -28,8 +36,15 @@ export async function GET(request: NextRequest) {
     );
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
+
     if (!error) return response;
+
+    // Redirect with the real error message so it's visible in the URL for debugging
+    return NextResponse.redirect(
+      `${origin}/auth?error=${encodeURIComponent(error.message)}`
+    );
   }
 
-  return NextResponse.redirect(`${origin}/auth?error=callback_failed`);
+  // No code and no error — something unexpected happened
+  return NextResponse.redirect(`${origin}/auth?error=no_code_received`);
 }

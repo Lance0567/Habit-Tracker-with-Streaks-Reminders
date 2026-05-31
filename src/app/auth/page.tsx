@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Zap, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
 function GoogleIcon() {
@@ -76,6 +76,13 @@ export default function SignInPage() {
   const [gLoading, setGLoading] = useState(false);
   const [error, setError]       = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Show errors forwarded from the OAuth callback (e.g. PKCE failure details)
+  useEffect(() => {
+    const urlError = searchParams.get("error");
+    if (urlError) setError(decodeURIComponent(urlError));
+  }, [searchParams]);
 
   async function handleEmailSignIn(e: React.FormEvent) {
     e.preventDefault();
