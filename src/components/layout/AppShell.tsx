@@ -12,20 +12,11 @@ import { StoreProvider } from "@/components/layout/StoreProvider";
 import { ToastContainer } from "@/components/ui/GlassToast";
 import { useUIStore } from "@/store/uiStore";
 
-function LayoutShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+// Inner layout: only mounts when isAppRoute is true (StoreProvider guarantees auth)
+function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const collapsed = useUIStore((s) => s.sidebarCollapsed);
   const toasts = useUIStore((s) => s.toasts);
   const removeToast = useUIStore((s) => s.removeToast);
-
-  const isAppRoute =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/habits") ||
-    pathname.startsWith("/analytics") ||
-    pathname.startsWith("/categories") ||
-    pathname.startsWith("/settings");
-
-  if (!isAppRoute) return <>{children}</>;
 
   return (
     <div className="flex min-h-screen">
@@ -49,14 +40,33 @@ function LayoutShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Decides whether to wrap with StoreProvider (which calls hydrate → Supabase).
+// On /auth the user is unauthenticated; StoreProvider must not mount there.
+function LayoutShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  const isAppRoute =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/habits") ||
+    pathname.startsWith("/analytics") ||
+    pathname.startsWith("/categories") ||
+    pathname.startsWith("/settings");
+
+  if (!isAppRoute) return <>{children}</>;
+
+  return (
+    <StoreProvider>
+      <AppLayoutContent>{children}</AppLayoutContent>
+    </StoreProvider>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <MotionConfig reducedMotion="user">
-      <StoreProvider>
-        <ThemeProvider />
-        <AnimatedBackground />
-        <LayoutShell>{children}</LayoutShell>
-      </StoreProvider>
+      <ThemeProvider />
+      <AnimatedBackground />
+      <LayoutShell>{children}</LayoutShell>
     </MotionConfig>
   );
 }

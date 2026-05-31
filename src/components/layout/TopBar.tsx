@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { usePathname } from "next/navigation";
 import { GlassButton } from "@/components/ui/GlassButton";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { UserAvatar } from "@/components/layout/UserAvatar";
 import { useUIStore } from "@/store/uiStore";
 import { useHabitStore } from "@/store/habitStore";
 
@@ -83,6 +84,7 @@ export function TopBar() {
         </button>
 
         <NotificationBell />
+        <UserAvatar />
       </div>
     </header>
   );

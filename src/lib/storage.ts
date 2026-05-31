@@ -1,127 +1,254 @@
-import { format, subDays } from "date-fns";
-import { getDB } from "./db";
-import { MOCK_HABITS, MOCK_CATEGORIES } from "./mockData";
+// Cloud storage layer — replaces IndexedDB with Supabase.
+// All public function signatures are identical to the previous idb version
+// so habitStore.ts requires minimal changes.
+
+import { createClient } from "@/lib/supabase";
 import type { Habit, HabitLog, Category, AppSettings } from "@/types";
+
+// ── Row mappers (snake_case DB → camelCase TS) ───────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToCategory(row: any): Category {
+  return {
+    id:        row.id,
+    name:      row.name,
+    color:     row.color,
+    icon:      row.icon,
+    createdAt: row.created_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToHabit(row: any): Habit {
+  return {
+    id:          row.id,
+    name:        row.name,
+    description: row.description,
+    categoryId:  row.category_id,
+    icon:        row.icon,
+    color:       row.color,
+    frequency:   row.frequency,
+    customDays:  row.custom_days ?? undefined,
+    targetCount: row.target_count,
+    unit:        row.unit,
+    reminders:   row.reminders ?? [],
+    archived:    row.archived,
+    createdAt:   row.created_at,
+    updatedAt:   row.updated_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToLog(row: any): HabitLog {
+  return {
+    id:             row.id,
+    habitId:        row.habit_id,
+    date:           row.date,
+    completedCount: row.completed_count,
+    note:           row.note ?? undefined,
+    completedAt:    row.completed_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToSettings(row: any): AppSettings {
+  return {
+    notificationsEnabled: row.notifications_enabled,
+    swRegistered:         row.sw_registered,
+    weekStartsOn:         row.week_starts_on,
+    defaultView:          row.default_view,
+    accentColor:          row.accent_color ?? undefined,
+    theme:                row.theme ?? undefined,
+    createdAt:            row.created_at,
+  };
+}
+
+// Helper: returns the current user's UUID. Throws if unauthenticated.
+async function getUserId(): Promise<string> {
+  const supabase = createClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) throw new Error("Not authenticated");
+  return user.id;
+}
 
 // ── Categories ────────────────────────────────────────────────────────────────
 
 export async function getAllCategories(): Promise<Category[]> {
-  return (await getDB()).getAll("categories");
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(rowToCategory);
 }
 
 export async function saveCategory(cat: Category): Promise<void> {
-  await (await getDB()).put("categories", cat);
+  const userId = await getUserId();
+  const supabase = createClient();
+  const { error } = await supabase.from("categories").upsert({
+    id:         cat.id,
+    user_id:    userId,
+    name:       cat.name,
+    color:      cat.color,
+    icon:       cat.icon,
+    created_at: cat.createdAt,
+  });
+  if (error) throw error;
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  await (await getDB()).delete("categories", id);
+  const supabase = createClient();
+  const { error } = await supabase.from("categories").delete().eq("id", id);
+  if (error) throw error;
 }
 
 // ── Habits ────────────────────────────────────────────────────────────────────
 
 export async function getAllHabits(): Promise<Habit[]> {
-  return (await getDB()).getAll("habits");
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("habits")
+    .select("*")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(rowToHabit);
 }
 
 export async function saveHabit(habit: Habit): Promise<void> {
-  await (await getDB()).put("habits", habit);
+  const userId = await getUserId();
+  const supabase = createClient();
+  const { error } = await supabase.from("habits").upsert({
+    id:           habit.id,
+    user_id:      userId,
+    name:         habit.name,
+    description:  habit.description,
+    category_id:  habit.categoryId,
+    icon:         habit.icon,
+    color:        habit.color,
+    frequency:    habit.frequency,
+    custom_days:  habit.customDays ?? null,
+    target_count: habit.targetCount,
+    unit:         habit.unit,
+    reminders:    habit.reminders,
+    archived:     habit.archived,
+    created_at:   habit.createdAt,
+    updated_at:   habit.updatedAt,
+  });
+  if (error) throw error;
 }
 
 export async function deleteHabit(id: string): Promise<void> {
-  await (await getDB()).delete("habits", id);
+  const supabase = createClient();
+  // Remove logs first so orphaned records don't accumulate
+  await supabase.from("habit_logs").delete().eq("habit_id", id);
+  const { error } = await supabase.from("habits").delete().eq("id", id);
+  if (error) throw error;
 }
 
 // ── Logs ──────────────────────────────────────────────────────────────────────
 
 export async function getAllLogs(): Promise<HabitLog[]> {
-  return (await getDB()).getAll("logs");
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("habit_logs")
+    .select("*")
+    .order("date", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(rowToLog);
 }
 
 export async function toggleLog(
   habitId: string,
   date: string
 ): Promise<{ action: "added" | "removed"; log?: HabitLog }> {
-  const db = await getDB();
-  const existing = await db.getAllFromIndex(
-    "logs",
-    "by-habit-date",
-    IDBKeyRange.only([habitId, date])
-  );
-  if (existing.length > 0) {
-    await db.delete("logs", existing[0].id);
+  const userId = await getUserId();
+  const supabase = createClient();
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("habit_logs")
+    .select("id")
+    .eq("habit_id", habitId)
+    .eq("date", date)
+    .maybeSingle();
+
+  if (fetchError) throw fetchError;
+
+  if (existing) {
+    const { error } = await supabase
+      .from("habit_logs")
+      .delete()
+      .eq("id", existing.id);
+    if (error) throw error;
     return { action: "removed" };
   }
+
   const newLog: HabitLog = {
-    id: crypto.randomUUID(),
+    id:             crypto.randomUUID(),
     habitId,
     date,
     completedCount: 1,
-    completedAt: new Date().toISOString(),
+    completedAt:    new Date().toISOString(),
   };
-  await db.put("logs", newLog);
+
+  const { error } = await supabase.from("habit_logs").insert({
+    id:              newLog.id,
+    user_id:         userId,
+    habit_id:        newLog.habitId,
+    date:            newLog.date,
+    completed_count: newLog.completedCount,
+    completed_at:    newLog.completedAt,
+  });
+  if (error) throw error;
+
   return { action: "added", log: newLog };
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 
 export async function getSettings(): Promise<AppSettings | null> {
-  const db = await getDB();
-  const s = await db.get("settings", "app");
-  if (!s) return null;
-  const { id: _id, ...settings } = s;
-  return settings as AppSettings;
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_settings")
+    .select("*")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return rowToSettings(data);
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
-  await (await getDB()).put("settings", { ...settings, id: "app" });
-}
-
-// ── Seed ──────────────────────────────────────────────────────────────────────
-
-export async function seedIfEmpty(): Promise<void> {
-  const db = await getDB();
-  if ((await db.count("habits")) > 0) return;
-
-  for (const cat of MOCK_CATEGORIES) await db.put("categories", cat);
-  for (const habit of MOCK_HABITS) await db.put("habits", habit);
-
-  const rates: Record<string, number> = {
-    h1: 0.78, h2: 0.92, h3: 0.85, h4: 0.6, h5: 0.45, h6: 0.71,
-  };
-  for (const habit of MOCK_HABITS) {
-    const rate = rates[habit.id] ?? 0.7;
-    for (let i = 1; i <= 90; i++) {
-      if (Math.random() < rate) {
-        const date = format(subDays(new Date(), i), "yyyy-MM-dd");
-        await db.put("logs", {
-          id: crypto.randomUUID(),
-          habitId: habit.id,
-          date,
-          completedCount: 1,
-          completedAt: new Date().toISOString(),
-        });
-      }
-    }
-  }
-
-  await db.put("settings", {
-    id: "app",
-    notificationsEnabled: false,
-    swRegistered: false,
-    weekStartsOn: 0,
-    defaultView: "grid",
-    createdAt: new Date().toISOString(),
+  const userId = await getUserId();
+  const supabase = createClient();
+  const { error } = await supabase.from("user_settings").upsert({
+    user_id:               userId,
+    notifications_enabled: settings.notificationsEnabled,
+    sw_registered:         settings.swRegistered,
+    week_starts_on:        settings.weekStartsOn,
+    default_view:          settings.defaultView,
+    accent_color:          settings.accentColor ?? null,
+    theme:                 settings.theme ?? null,
+    created_at:            settings.createdAt,
   });
+  if (error) throw error;
 }
+
+// ── Seed (no-op in cloud — kept for interface compatibility) ──────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+export async function seedIfEmpty(): Promise<void> {}
 
 // ── Data reset ────────────────────────────────────────────────────────────────
 
 export async function clearAllData(): Promise<void> {
-  const db = await getDB();
-  await db.clear("habits");
-  await db.clear("logs");
-  await db.clear("categories");
-  await db.clear("settings");
+  const supabase = createClient();
+  // .neq("id", "") matches every row; RLS limits deletion to current user's rows.
+  await Promise.all([
+    supabase.from("habits").delete().neq("id", ""),
+    supabase.from("habit_logs").delete().neq("id", ""),
+    supabase.from("categories").delete().neq("id", ""),
+    supabase.from("user_settings").delete().neq("user_id", ""),
+  ]);
 }
 
 // ── Export / Import ───────────────────────────────────────────────────────────
@@ -139,9 +266,23 @@ export async function exportData(): Promise<string> {
 export async function importData(json: string): Promise<void> {
   const { habits, logs, categories, settings } = JSON.parse(json);
   await clearAllData();
-  const db = await getDB();
-  for (const h of habits ?? []) await db.put("habits", h);
-  for (const l of logs ?? []) await db.put("logs", l);
-  for (const c of categories ?? []) await db.put("categories", c);
-  if (settings) await db.put("settings", { ...settings, id: "app" });
+  const userId = await getUserId();
+  const supabase = createClient();
+
+  for (const h of habits ?? []) await saveHabit(h);
+  for (const c of categories ?? []) await saveCategory(c);
+
+  for (const l of logs ?? []) {
+    await supabase.from("habit_logs").upsert({
+      id:              l.id,
+      user_id:         userId,
+      habit_id:        l.habitId,
+      date:            l.date,
+      completed_count: l.completedCount,
+      note:            l.note ?? null,
+      completed_at:    l.completedAt,
+    });
+  }
+
+  if (settings) await saveSettings(settings);
 }

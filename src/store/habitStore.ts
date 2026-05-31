@@ -34,13 +34,24 @@ export const useHabitStore = create<HabitStore>((set) => ({
   isLoading: true,
 
   hydrate: async () => {
-    await storage.seedIfEmpty();
-    const [habits, logs, categories, settings] = await Promise.all([
+    const [habits, logs, categories, rawSettings] = await Promise.all([
       storage.getAllHabits(),
       storage.getAllLogs(),
       storage.getAllCategories(),
       storage.getSettings(),
     ]);
+    let settings = rawSettings;
+    if (!settings) {
+      // First login — create a default settings row for this user
+      settings = {
+        notificationsEnabled: false,
+        swRegistered: false,
+        weekStartsOn: 0,
+        defaultView: "grid",
+        createdAt: new Date().toISOString(),
+      };
+      await storage.saveSettings(settings);
+    }
     set({ habits, logs, categories, settings, isLoading: false });
   },
 
