@@ -5,6 +5,8 @@ import {
   getHeatMapData,
   getOverallWeeklyData,
   getMonthlyCompletionData,
+  getYearlyCompletionData,
+  getYearlyAvgData,
   getThisWeekTrendData,
   getCategoryStats,
 } from "@/lib/analytics";
@@ -59,6 +61,16 @@ export function useGlobalAnalytics() {
     [activeHabits, logs]
   );
 
+  const yearlyData = useMemo(
+    () => getYearlyCompletionData(activeHabits, logs),
+    [activeHabits, logs]
+  );
+
+  const yearlyAvgData = useMemo(
+    () => getYearlyAvgData(activeHabits, logs),
+    [activeHabits, logs]
+  );
+
   const trendData = useMemo(
     () => getThisWeekTrendData(activeHabits, logs),
     [activeHabits, logs]
@@ -81,6 +93,8 @@ export function useGlobalAnalytics() {
     completedTodayCount,
     weeklyData,
     monthlyData,
+    yearlyData,
+    yearlyAvgData,
     trendData,
     categoryStats,
     top4Habits: activeHabits.slice(0, 4),

@@ -94,6 +94,59 @@ export function getMonthlyCompletionData(
   });
 }
 
+export function getYearlyAvgData(
+  habits: Habit[],
+  logs: HabitLog[]
+): { week: string; rate: number }[] {
+  const logSet = new Set(logs.map((l) => `${l.habitId}:${l.date}`));
+  return Array.from({ length: 12 }, (_, i) => {
+    const monthIdx = 11 - i;
+    const d = subMonths(new Date(), monthIdx);
+    const monthStart = startOfMonth(d);
+    const monthEnd = endOfMonth(d);
+    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+    let completed = 0;
+    let expected = 0;
+    for (const habit of habits) {
+      for (const day of days) {
+        if (isHabitDueOnDate(habit, day)) {
+          expected++;
+          if (logSet.has(`${habit.id}:${format(day, "yyyy-MM-dd")}`)) completed++;
+        }
+      }
+    }
+    return {
+      week: format(monthStart, "MMM"),
+      rate: expected === 0 ? 0 : Math.round((completed / expected) * 100),
+    };
+  });
+}
+
+export function getYearlyCompletionData(
+  habits: Habit[],
+  logs: HabitLog[]
+): { name: string; streak: number }[] {
+  const logSet = new Set(logs.map((l) => `${l.habitId}:${l.date}`));
+  return Array.from({ length: 12 }, (_, i) => {
+    const monthIdx = 11 - i;
+    const d = subMonths(new Date(), monthIdx);
+    const monthStart = startOfMonth(d);
+    const monthEnd = endOfMonth(d);
+    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+    let completed = 0;
+    for (const habit of habits) {
+      for (const day of days) {
+        if (isHabitDueOnDate(habit, day) && logSet.has(`${habit.id}:${format(day, "yyyy-MM-dd")}`)) {
+          completed++;
+        }
+      }
+    }
+    return { name: format(monthStart, "MMM"), streak: completed };
+  });
+}
+
 export function getThisWeekTrendData(
   habits: Habit[],
   logs: HabitLog[]

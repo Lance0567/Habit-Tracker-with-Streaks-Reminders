@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -26,7 +27,10 @@ import { useHabitStore } from "@/store/habitStore";
 import { HABIT_COLORS } from "@/lib/constants";
 import { TrendingUp, Flame, CheckCircle, Target } from "lucide-react";
 
+type Period = "monthly" | "yearly";
+
 export default function AnalyticsPage() {
+  const [period, setPeriod] = useState<Period>("monthly");
   const { isLoading } = useHabitStore();
   const {
     avgCompletionRate,
@@ -35,6 +39,8 @@ export default function AnalyticsPage() {
     completedTodayCount,
     weeklyData,
     monthlyData,
+    yearlyData,
+    yearlyAvgData,
     trendData,
     categoryStats,
     top4Habits,
@@ -53,6 +59,15 @@ export default function AnalyticsPage() {
     { label: "Completed Today", value: `${completedTodayCount}/${totalHabits}`, icon: <CheckCircle size={16} />, color: "#10B981" },
   ];
 
+  // Data and labels change based on selected period
+  const completionChartData = period === "monthly" ? weeklyData : yearlyAvgData;
+  const completionChartTitle = period === "monthly" ? "Weekly Completion Rate" : "Monthly Completion Rate";
+  const completionChartSub = period === "monthly" ? "Last 12 weeks" : "Last 12 months";
+
+  const barChartData = period === "monthly" ? monthlyData : yearlyData;
+  const barChartTitle = "Total Completions";
+  const barChartSub = period === "monthly" ? "Last 6 months" : "Last 12 months";
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -63,11 +78,49 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
-        <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Analytics</h2>
-        <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>Your habit performance at a glance</p>
+      {/* Header + toggle */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-start justify-between gap-4 flex-wrap"
+      >
+        <div>
+          <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Analytics</h2>
+          <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>Your habit performance at a glance</p>
+        </div>
+
+        {/* Period toggle */}
+        <div
+          className="flex gap-1 p-1 rounded-xl"
+          style={{
+            background: "var(--glass-bg-subtle)",
+            border: "1px solid var(--glass-border)",
+          }}
+        >
+          {(["monthly", "yearly"] as Period[]).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className="px-4 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all duration-200"
+              style={
+                period === p
+                  ? {
+                      background: "var(--color-accent)",
+                      color: "#ffffff",
+                      boxShadow: "0 0 12px rgba(124,58,237,0.35)",
+                    }
+                  : {
+                      color: "var(--text-muted)",
+                    }
+              }
+            >
+              {p}
+            </button>
+          ))}
+        </div>
       </motion.div>
 
+      {/* Headline stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {headline.map((s, i) => (
           <motion.div
@@ -92,17 +145,18 @@ export default function AnalyticsPage() {
         ))}
       </div>
 
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {[
           {
-            title: "Weekly Completion Rate",
-            sub: "Last 12 weeks",
-            component: <CompletionRateChart data={weeklyData} />,
+            title: completionChartTitle,
+            sub: completionChartSub,
+            component: <CompletionRateChart data={completionChartData} />,
           },
           {
-            title: "Monthly Completions",
-            sub: "Total check-ins per month",
-            component: <StreakHistoryChart data={monthlyData} />,
+            title: barChartTitle,
+            sub: barChartSub,
+            component: <StreakHistoryChart data={barChartData} />,
           },
           {
             title: "Category Breakdown",
