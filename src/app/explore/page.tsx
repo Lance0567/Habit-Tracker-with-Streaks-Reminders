@@ -1,18 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { BookOpen, Layers, CheckCircle, Clock, ChevronRight } from "lucide-react";
 import { PROGRAMS, totalTasks } from "@/lib/programs";
 import { ARTICLES, type ArticleCategory } from "@/lib/articles";
-import { ProgramDetailModal } from "@/components/explore/ProgramDetailModal";
-import { ArticleModal } from "@/components/explore/ArticleModal";
-import {
-  getUserPrograms,
-  enrollProgram,
-  updateProgramProgress,
-  unenrollProgram,
-} from "@/lib/storage";
+import { getUserPrograms } from "@/lib/storage";
 import type { UserProgram } from "@/types";
 
 type Tab = "programs" | "articles";
@@ -25,19 +20,18 @@ const DIFFICULTY_COLOR: Record<string, string> = {
   Hard:     "#F43F5E",
 };
 
-// ── Program Card (summary trigger — opens detail modal) ──────────────────────
+// ── Program Card (links to detail page) ──────────────────────────────────────
 
 function ProgramCard({
   program,
   enrollment,
-  onOpen,
   featured,
 }: {
   program: (typeof PROGRAMS)[number];
   enrollment?: UserProgram;
-  onOpen: () => void;
   featured?: boolean;
 }) {
+  const href = `/explore/programs/${program.id}`;
   const isCompleted = !!enrollment?.completedAt;
   const inProgress  = !!enrollment && !isCompleted;
   const completedSet = new Set(enrollment?.completedTasks ?? []);
@@ -46,7 +40,7 @@ function ProgramCard({
   for (let d = 1; d <= program.duration; d++) { if (!isDayDone(d)) { activeDay = d; break; } }
   const doneTasks = enrollment?.completedTasks.length ?? 0;
   const progress  = enrollment ? Math.round((doneTasks / totalTasks(program)) * 100) : 0;
-  const diffColor   = DIFFICULTY_COLOR[program.difficulty];
+  const diffColor = DIFFICULTY_COLOR[program.difficulty];
 
   const statusBadge = isCompleted ? (
     <span className="flex items-center gap-1 text-[11px] font-semibold" style={{ color: "#10B981" }}>
@@ -62,23 +56,18 @@ function ProgramCard({
 
   if (featured) {
     return (
-      <motion.button
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        onClick={onOpen}
-        className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-left w-full transition-all"
+      <Link
+        href={href}
+        className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-left block w-full transition-all"
         style={{
           background: `linear-gradient(135deg, ${program.color}22 0%, ${program.color}08 60%, var(--glass-bg-subtle) 100%)`,
           border: `1px solid ${program.color}30`,
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${program.color}55`; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${program.color}30`; }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = `${program.color}55`; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = `${program.color}30`; }}
       >
-        <div
-          className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
-          style={{ background: `radial-gradient(circle, ${program.color}30 0%, transparent 70%)`, filter: "blur(32px)" }}
-        />
+        <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
+          style={{ background: `radial-gradient(circle, ${program.color}30 0%, transparent 70%)`, filter: "blur(32px)" }} />
         <div className="relative">
           <div className="flex items-center gap-3 flex-wrap mb-3">
             <span className="text-3xl">{program.emoji}</span>
@@ -95,13 +84,10 @@ function ProgramCard({
               Featured
             </span>
           </div>
-
           <h3 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>{program.title}</h3>
           <p className="text-sm leading-relaxed max-w-lg mb-4" style={{ color: "var(--text-secondary)" }}>
             {program.description}
           </p>
-
-          {/* Progress / status */}
           {inProgress && (
             <div className="max-w-xs mb-4">
               <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--glass-bg-elevated)" }}>
@@ -109,7 +95,6 @@ function ProgramCard({
               </div>
             </div>
           )}
-
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
               style={{ background: program.color, boxShadow: `0 0 20px ${program.color}40` }}>
@@ -118,15 +103,13 @@ function ProgramCard({
             {statusBadge}
           </div>
         </div>
-      </motion.button>
+      </Link>
     );
   }
 
   return (
-    <motion.button
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      onClick={onOpen}
+    <Link
+      href={href}
       className="flex flex-col rounded-2xl p-5 h-full w-full text-left transition-all duration-200"
       style={{
         background: "var(--glass-bg-default)",
@@ -134,8 +117,8 @@ function ProgramCard({
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${program.color}35`; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--glass-border)"; }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = `${program.color}35`; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--glass-border)"; }}
     >
       <div className="flex items-start justify-between mb-3">
         <span className="text-2xl">{program.emoji}</span>
@@ -150,13 +133,10 @@ function ProgramCard({
           </span>
         </div>
       </div>
-
       <h3 className="text-sm font-bold mb-1.5" style={{ color: "var(--text-primary)" }}>{program.title}</h3>
       <p className="text-xs leading-relaxed flex-1 mb-4" style={{ color: "var(--text-muted)" }}>
         {program.description.slice(0, 100)}…
       </p>
-
-      {/* Progress bar when in progress */}
       {inProgress && (
         <div className="mb-3">
           <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--glass-bg-elevated)" }}>
@@ -164,25 +144,21 @@ function ProgramCard({
           </div>
         </div>
       )}
-
       <div className="flex items-center justify-between">
         {statusBadge}
         <ChevronRight size={14} style={{ color: "var(--text-muted)" }} />
       </div>
-    </motion.button>
+    </Link>
   );
 }
 
-// ── Article Card (summary trigger — opens reader modal) ──────────────────────
+// ── Article Card (links to detail page) ──────────────────────────────────────
 
-function ArticleCard({ article, index, onOpen }: { article: (typeof ARTICLES)[number]; index: number; onOpen: () => void }) {
+function ArticleCard({ article }: { article: (typeof ARTICLES)[number] }) {
   return (
-    <motion.button
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      onClick={onOpen}
-      className="rounded-2xl p-5 text-left w-full transition-all duration-200"
+    <Link
+      href={`/explore/articles/${article.id}`}
+      className="rounded-2xl p-5 text-left block w-full transition-all duration-200"
       style={{
         background: "var(--glass-bg-default)",
         border: "1px solid var(--glass-border)",
@@ -190,12 +166,12 @@ function ArticleCard({ article, index, onOpen }: { article: (typeof ARTICLES)[nu
         WebkitBackdropFilter: "blur(12px)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = `${article.color}35`;
-        e.currentTarget.style.background = "var(--glass-bg-elevated)";
+        (e.currentTarget as HTMLAnchorElement).style.borderColor = `${article.color}35`;
+        (e.currentTarget as HTMLAnchorElement).style.background = "var(--glass-bg-elevated)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "var(--glass-border)";
-        e.currentTarget.style.background = "var(--glass-bg-default)";
+        (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--glass-border)";
+        (e.currentTarget as HTMLAnchorElement).style.background = "var(--glass-bg-default)";
       }}
     >
       <div className="flex items-start gap-3 mb-3">
@@ -215,26 +191,24 @@ function ArticleCard({ article, index, onOpen }: { article: (typeof ARTICLES)[nu
           </h3>
         </div>
       </div>
-
       <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--text-muted)" }}>
         {article.excerpt}
       </p>
-
       <p className="text-[10px] mt-2 font-medium flex items-center gap-1" style={{ color: article.color }}>
         Read article <ChevronRight size={11} />
       </p>
-    </motion.button>
+    </Link>
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// ── Content ───────────────────────────────────────────────────────────────────
 
-export default function ExplorePage() {
-  const [tab, setTab]                       = useState<Tab>("programs");
+function ExploreContent() {
+  const searchParams = useSearchParams();
+  const initialTab: Tab = searchParams.get("tab") === "articles" ? "articles" : "programs";
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [categoryFilter, setCategoryFilter] = useState<ArticleCategory | "All">("All");
-  const [enrolledMap, setEnrolledMap]       = useState<Record<string, UserProgram>>({});
-  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
-  const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
+  const [enrolledMap, setEnrolledMap] = useState<Record<string, UserProgram>>({});
 
   useEffect(() => {
     getUserPrograms()
@@ -246,61 +220,11 @@ export default function ExplorePage() {
       .catch(() => {});
   }, []);
 
-  async function handleStart(programId: string) {
-    // optimistic
-    const optimistic: UserProgram = {
-      id: `temp-${programId}`,
-      programId,
-      startedAt: new Date().toISOString(),
-      currentDay: 1,
-      completedTasks: [],
-      completedAt: null,
-    };
-    setEnrolledMap((prev) => ({ ...prev, [programId]: optimistic }));
-    try {
-      const enrolled = await enrollProgram(programId);
-      setEnrolledMap((prev) => ({ ...prev, [programId]: enrolled }));
-    } catch {
-      setEnrolledMap((prev) => { const n = { ...prev }; delete n[programId]; return n; });
-    }
-  }
-
-  async function handleToggleTask(programId: string, day: number, taskId: string) {
-    const program = PROGRAMS.find((p) => p.id === programId);
-    const current = enrolledMap[programId];
-    if (!program || !current) return;
-
-    const k = `${day}:${taskId}`;
-    const set = new Set(current.completedTasks);
-    if (set.has(k)) set.delete(k); else set.add(k);
-    const completedTasks = Array.from(set);
-
-    // Recompute active day + completion from the new set
-    const isDayDone = (d: number) => program.days[d - 1].tasks.every((t) => set.has(`${d}:${t.id}`));
-    let activeDay = program.duration;
-    for (let d = 1; d <= program.duration; d++) { if (!isDayDone(d)) { activeDay = d; break; } }
-    const allDone = program.days.every((d) => isDayDone(d.day));
-    const completedAt = allDone ? (current.completedAt ?? new Date().toISOString()) : null;
-
-    const updated: UserProgram = { ...current, completedTasks, currentDay: activeDay, completedAt };
-    setEnrolledMap((prev) => ({ ...prev, [programId]: updated }));
-    await updateProgramProgress(programId, completedTasks, activeDay, completedAt);
-  }
-
-  async function handleReset(programId: string) {
-    setEnrolledMap((prev) => { const n = { ...prev }; delete n[programId]; return n; });
-    await unenrollProgram(programId);
-  }
-
   const featuredProgram = PROGRAMS.find((p) => p.featured);
   const otherPrograms   = PROGRAMS.filter((p) => !p.featured);
-
   const filteredArticles = categoryFilter === "All"
     ? ARTICLES
     : ARTICLES.filter((a) => a.category === categoryFilter);
-
-  const selectedProgram = PROGRAMS.find((p) => p.id === selectedProgramId) ?? null;
-  const selectedArticle = ARTICLES.find((a) => a.id === selectedArticleId) ?? null;
 
   return (
     <div className="space-y-6">
@@ -317,7 +241,6 @@ export default function ExplorePage() {
           </p>
         </div>
 
-        {/* Tab toggle */}
         <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)" }}>
           {([
             { key: "programs" as Tab, icon: <Layers size={13} />, label: "Programs" },
@@ -342,49 +265,20 @@ export default function ExplorePage() {
       {/* Tab content */}
       <AnimatePresence mode="wait">
         {tab === "programs" ? (
-          <motion.div
-            key="programs"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 10 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-5"
-          >
+          <motion.div key="programs" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.2 }} className="space-y-5">
             {featuredProgram && (
-              <ProgramCard
-                program={featuredProgram}
-                enrollment={enrolledMap[featuredProgram.id]}
-                onOpen={() => setSelectedProgramId(featuredProgram.id)}
-                featured
-              />
+              <ProgramCard program={featuredProgram} enrollment={enrolledMap[featuredProgram.id]} featured />
             )}
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {otherPrograms.map((program, i) => (
-                <motion.div
-                  key={program.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + i * 0.06 }}
-                >
-                  <ProgramCard
-                    program={program}
-                    enrollment={enrolledMap[program.id]}
-                    onOpen={() => setSelectedProgramId(program.id)}
-                  />
+                <motion.div key={program.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.06 }}>
+                  <ProgramCard program={program} enrollment={enrolledMap[program.id]} />
                 </motion.div>
               ))}
             </div>
           </motion.div>
         ) : (
-          <motion.div
-            key="articles"
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-5"
-          >
+          <motion.div key="articles" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }} className="space-y-5">
             <div className="flex gap-2 flex-wrap">
               {(["All", ...CATEGORIES] as (ArticleCategory | "All")[]).map((cat) => (
                 <button
@@ -401,18 +295,13 @@ export default function ExplorePage() {
                 </button>
               ))}
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredArticles.map((article, i) => (
-                <ArticleCard
-                  key={article.id}
-                  article={article}
-                  index={i}
-                  onOpen={() => setSelectedArticleId(article.id)}
-                />
+                <motion.div key={article.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                  <ArticleCard article={article} />
+                </motion.div>
               ))}
             </div>
-
             {filteredArticles.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-sm" style={{ color: "var(--text-muted)" }}>No articles in this category yet.</p>
@@ -421,23 +310,14 @@ export default function ExplorePage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Modals */}
-      <ProgramDetailModal
-        program={selectedProgram}
-        enrollment={selectedProgram ? enrolledMap[selectedProgram.id] : undefined}
-        open={!!selectedProgram}
-        onClose={() => setSelectedProgramId(null)}
-        onStart={() => selectedProgram && handleStart(selectedProgram.id)}
-        onToggleTask={(day, taskId) => selectedProgram && handleToggleTask(selectedProgram.id, day, taskId)}
-        onReset={() => selectedProgram && handleReset(selectedProgram.id)}
-      />
-
-      <ArticleModal
-        article={selectedArticle}
-        open={!!selectedArticle}
-        onClose={() => setSelectedArticleId(null)}
-      />
     </div>
+  );
+}
+
+export default function ExplorePage() {
+  return (
+    <Suspense>
+      <ExploreContent />
+    </Suspense>
   );
 }

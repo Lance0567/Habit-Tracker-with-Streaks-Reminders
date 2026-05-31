@@ -256,6 +256,17 @@ export async function getUserPrograms(): Promise<UserProgram[]> {
   return (data ?? []).map(rowToUserProgram);
 }
 
+export async function getUserProgram(programId: string): Promise<UserProgram | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_programs")
+    .select("*")
+    .eq("program_id", programId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? rowToUserProgram(data) : null;
+}
+
 export async function enrollProgram(programId: string): Promise<UserProgram> {
   const userId = await getUserId();
   const supabase = createClient();
