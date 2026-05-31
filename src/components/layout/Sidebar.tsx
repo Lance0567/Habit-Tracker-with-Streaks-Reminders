@@ -255,27 +255,52 @@ export function Sidebar() {
           </div>
         </nav>
 
-        {/* Collapse toggle */}
-        <div
-          className="p-3 flex-shrink-0"
-          style={{ borderTop: "1px solid var(--divider)" }}
-        >
-          <button
-            onClick={toggleSidebar}
-            className="w-full flex items-center justify-center p-2 rounded-[var(--radius-md)] transition-all duration-200 focus:outline-none"
-            style={{ color: "var(--text-muted)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
-          >
-            <motion.div
-              animate={{ rotate: collapsed ? 0 : 180 }}
-              transition={{ type: "spring", stiffness: 300, damping: 28 }}
-            >
-              <ChevronRight size={15} />
-            </motion.div>
-          </button>
-        </div>
       </motion.aside>
+
+      {/* Floating collapse toggle — portal so overflow:hidden on aside can't clip it */}
+      {mounted && createPortal(
+        <motion.button
+          onClick={toggleSidebar}
+          animate={{ left: collapsed ? 58 : 226 }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          className="fixed z-[9998] top-[68px] flex items-center justify-center focus:outline-none group"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            background: "var(--nav-bg)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            border: "1.5px solid var(--nav-border)",
+            boxShadow: isDark
+              ? "0 2px 12px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05)"
+              : "0 2px 10px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.8)",
+            color: "var(--text-muted)",
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.borderColor = accentColor + "80";
+            (e.currentTarget as HTMLButtonElement).style.color = accentColor;
+            (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 2px 16px ${accentColor}30, 0 0 0 1px ${accentColor}20`;
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.borderColor = "";
+            (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)";
+            (e.currentTarget as HTMLButtonElement).style.boxShadow = isDark
+              ? "0 2px 12px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05)"
+              : "0 2px 10px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.8)";
+          }}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <motion.div
+            animate={{ rotate: collapsed ? 0 : 180 }}
+            transition={{ type: "spring", stiffness: 320, damping: 28 }}
+          >
+            <ChevronRight size={13} />
+          </motion.div>
+        </motion.button>,
+        document.body
+      )}
 
       {/* Collapse-mode tooltip — portal to escape overflow:hidden on the aside */}
       {mounted && createPortal(
