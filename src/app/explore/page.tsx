@@ -29,6 +29,17 @@ const DIFFICULTY_COLOR: Record<string, string> = {
   Hard:     "#F43F5E",
 };
 
+// Mix a hex colour toward black (amount 0–1). Used to make tinted pill text
+// read crisply on light backgrounds, where full-saturation brand colours wash out.
+function darken(hex: string, amount: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const f = (c: number) => Math.round(c * (1 - amount)).toString(16).padStart(2, "0");
+  return `#${f(r)}${f(g)}${f(b)}`;
+}
+
 // ── Program Card (links to detail page) ──────────────────────────────────────
 
 function ProgramCard({
@@ -115,9 +126,13 @@ function ProgramCard({
     const borderCol = isLight ? `${program.color}55` : `${program.color}40`;
     const textColor  = isLight ? "#1a1a2e"  : "#ffffff";
     const textMuted  = isLight ? "#3d3d5c"  : "rgba(255,255,255,0.65)";
-    const badgeBg    = isLight ? `${program.color}22` : `${program.color}25`;
-    const badgeBorder = isLight ? `${program.color}50` : `${program.color}45`;
     const trackBg    = isLight ? `${program.color}20` : "rgba(255,255,255,0.1)";
+    // Pill text: darken on light bg so each tag stays high-contrast; keep vivid on dark.
+    const ACCENT     = "#7C3AED";
+    const dayText      = isLight ? darken(program.color, 0.34) : program.color;
+    const diffText     = isLight ? darken(diffColor, 0.34)     : diffColor;
+    const featuredText = isLight ? darken(ACCENT, 0.28)        : "var(--color-accent)";
+    const labelColor   = isLight ? darken(program.color, 0.34) : program.color;
 
     return (
       <Link
@@ -157,15 +172,15 @@ function ProgramCard({
             {/* Badges row */}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
-                style={{ background: badgeBg, color: program.color, border: `1px solid ${badgeBorder}` }}>
+                style={{ background: `${program.color}${isLight ? "1f" : "25"}`, color: dayText, border: `1px solid ${program.color}${isLight ? "40" : "45"}` }}>
                 <Calendar size={10} /> {program.duration} days
               </span>
               <span className="text-xs font-bold px-2.5 py-1 rounded-full"
-                style={{ background: `${diffColor}25`, color: diffColor, border: `1px solid ${diffColor}50` }}>
+                style={{ background: `${diffColor}${isLight ? "1f" : "25"}`, color: diffText, border: `1px solid ${diffColor}${isLight ? "40" : "50"}` }}>
                 {program.difficulty}
               </span>
               <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
-                style={{ background: "rgba(124,58,237,0.22)", color: "var(--color-accent)", border: "1px solid rgba(124,58,237,0.5)" }}>
+                style={{ background: isLight ? "rgba(124,58,237,0.12)" : "rgba(124,58,237,0.22)", color: featuredText, border: `1px solid rgba(124,58,237,${isLight ? "0.38" : "0.5"})` }}>
                 ★ Featured
               </span>
             </div>
@@ -184,10 +199,10 @@ function ProgramCard({
             {inProgress && (
               <div className="max-w-xs">
                 <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-[11px] font-semibold" style={{ color: program.color }}>
+                  <span className="text-[11px] font-semibold" style={{ color: labelColor }}>
                     Day {activeDay} of {program.duration}
                   </span>
-                  <span className="text-[11px] font-bold tabular-nums" style={{ color: program.color }}>
+                  <span className="text-[11px] font-bold tabular-nums" style={{ color: labelColor }}>
                     {progress}%
                   </span>
                 </div>
