@@ -3,15 +3,14 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Layers, CheckCircle, Clock, ChevronRight } from "lucide-react";
-import { PROGRAMS } from "@/lib/programs";
+import { PROGRAMS, totalTasks } from "@/lib/programs";
 import { ARTICLES, type ArticleCategory } from "@/lib/articles";
 import { ProgramDetailModal } from "@/components/explore/ProgramDetailModal";
 import { ArticleModal } from "@/components/explore/ArticleModal";
 import {
   getUserPrograms,
   enrollProgram,
-  updateProgramDay,
-  completeProgram,
+  updateProgramProgress,
   unenrollProgram,
 } from "@/lib/storage";
 import type { UserProgram } from "@/types";
@@ -41,8 +40,12 @@ function ProgramCard({
 }) {
   const isCompleted = !!enrollment?.completedAt;
   const inProgress  = !!enrollment && !isCompleted;
-  const doneDays    = isCompleted ? program.duration : Math.max(0, (enrollment?.currentDay ?? 1) - 1);
-  const progress    = enrollment ? Math.round((doneDays / program.duration) * 100) : 0;
+  const completedSet = new Set(enrollment?.completedTasks ?? []);
+  const isDayDone = (d: number) => program.days[d - 1].tasks.every((t) => completedSet.has(`${d}:${t.id}`));
+  let activeDay = program.duration;
+  for (let d = 1; d <= program.duration; d++) { if (!isDayDone(d)) { activeDay = d; break; } }
+  const doneTasks = enrollment?.completedTasks.length ?? 0;
+  const progress  = enrollment ? Math.round((doneTasks / totalTasks(program)) * 100) : 0;
   const diffColor   = DIFFICULTY_COLOR[program.difficulty];
 
   const statusBadge = isCompleted ? (
@@ -51,7 +54,7 @@ function ProgramCard({
     </span>
   ) : inProgress ? (
     <span className="text-[11px] font-semibold" style={{ color: program.color }}>
-      Day {enrollment.currentDay} of {program.duration}
+      Day {activeDay} of {program.duration}
     </span>
   ) : (
     <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>Not started</span>
@@ -250,6 +253,7 @@ export default function ExplorePage() {
       programId,
       startedAt: new Date().toISOString(),
       currentDay: 1,
+      completedTasks: [],
       completedAt: null,
     };
     setEnrolledMap((prev) => ({ ...prev, [programId]: optimistic }));
@@ -261,17 +265,26 @@ export default function ExplorePage() {
     }
   }
 
-  async function handleCompleteDay(programId: string, duration: number) {
+  async function handleToggleTask(programId: string, day: number, taskId: string) {
+    const program = PROGRAMS.find((p) => p.id === programId);
     const current = enrolledMap[programId];
-    if (!current) return;
-    const nextDay = current.currentDay + 1;
-    if (nextDay > duration) {
-      setEnrolledMap((prev) => ({ ...prev, [programId]: { ...current, completedAt: new Date().toISOString() } }));
-      await completeProgram(programId);
-    } else {
-      setEnrolledMap((prev) => ({ ...prev, [programId]: { ...current, currentDay: nextDay } }));
-      await updateProgramDay(programId, nextDay);
-    }
+    if (!program || !current) return;
+
+    const k = `${day}:${taskId}`;
+    const set = new Set(current.completedTasks);
+    if (set.has(k)) set.delete(k); else set.add(k);
+    const completedTasks = Array.from(set);
+
+    // Recompute active day + completion from the new set
+    const isDayDone = (d: number) => program.days[d - 1].tasks.every((t) => set.has(`${d}:${t.id}`));
+    let activeDay = program.duration;
+    for (let d = 1; d <= program.duration; d++) { if (!isDayDone(d)) { activeDay = d; break; } }
+    const allDone = program.days.every((d) => isDayDone(d.day));
+    const completedAt = allDone ? (current.completedAt ?? new Date().toISOString()) : null;
+
+    const updated: UserProgram = { ...current, completedTasks, currentDay: activeDay, completedAt };
+    setEnrolledMap((prev) => ({ ...prev, [programId]: updated }));
+    await updateProgramProgress(programId, completedTasks, activeDay, completedAt);
   }
 
   async function handleReset(programId: string) {
@@ -416,7 +429,7 @@ export default function ExplorePage() {
         open={!!selectedProgram}
         onClose={() => setSelectedProgramId(null)}
         onStart={() => selectedProgram && handleStart(selectedProgram.id)}
-        onCompleteDay={() => selectedProgram && handleCompleteDay(selectedProgram.id, selectedProgram.duration)}
+        onToggleTask={(day, taskId) => selectedProgram && handleToggleTask(selectedProgram.id, day, taskId)}
         onReset={() => selectedProgram && handleReset(selectedProgram.id)}
       />
 

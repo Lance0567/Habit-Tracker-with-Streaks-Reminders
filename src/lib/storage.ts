@@ -237,11 +237,12 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
 
 function rowToUserProgram(row: any): UserProgram {
   return {
-    id:          row.id,
-    programId:   row.program_id,
-    startedAt:   row.started_at,
-    currentDay:  row.current_day,
-    completedAt: row.completed_at ?? null,
+    id:             row.id,
+    programId:      row.program_id,
+    startedAt:      row.started_at,
+    currentDay:     row.current_day,
+    completedTasks: row.completed_tasks ?? [],
+    completedAt:    row.completed_at ?? null,
   };
 }
 
@@ -260,7 +261,7 @@ export async function enrollProgram(programId: string): Promise<UserProgram> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("user_programs")
-    .insert({ user_id: userId, program_id: programId, current_day: 1 })
+    .insert({ user_id: userId, program_id: programId, current_day: 1, completed_tasks: [] })
     .select()
     .single();
   if (error) throw error;
@@ -272,6 +273,20 @@ export async function updateProgramDay(programId: string, day: number): Promise<
   const { error } = await supabase
     .from("user_programs")
     .update({ current_day: day })
+    .eq("program_id", programId);
+  if (error) throw error;
+}
+
+export async function updateProgramProgress(
+  programId: string,
+  completedTasks: string[],
+  currentDay: number,
+  completedAt: string | null
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("user_programs")
+    .update({ completed_tasks: completedTasks, current_day: currentDay, completed_at: completedAt })
     .eq("program_id", programId);
   if (error) throw error;
 }
