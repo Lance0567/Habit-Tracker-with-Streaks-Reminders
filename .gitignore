@@ -18,6 +18,9 @@ screenshot_final.mjs
 # claude internal
 .claude/
 
+# skills
+.agents
+
 # env files
 .env
 .env.local
