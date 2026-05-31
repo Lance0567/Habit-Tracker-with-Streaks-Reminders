@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Layers, Play, CheckCircle, ChevronRight, Clock, RotateCcw } from "lucide-react";
+import { BookOpen, Layers, CheckCircle, Clock, ChevronRight } from "lucide-react";
 import { PROGRAMS } from "@/lib/programs";
 import { ARTICLES, type ArticleCategory } from "@/lib/articles";
+import { ProgramDetailModal } from "@/components/explore/ProgramDetailModal";
+import { ArticleModal } from "@/components/explore/ArticleModal";
 import {
   getUserPrograms,
   enrollProgram,
@@ -24,144 +26,113 @@ const DIFFICULTY_COLOR: Record<string, string> = {
   Hard:     "#F43F5E",
 };
 
-// ── Program Card ─────────────────────────────────────────────────────────────
+// ── Program Card (summary trigger — opens detail modal) ──────────────────────
 
 function ProgramCard({
   program,
   enrollment,
-  onStart,
-  onContinue,
-  onReset,
+  onOpen,
   featured,
 }: {
   program: (typeof PROGRAMS)[number];
   enrollment?: UserProgram;
-  onStart: () => void;
-  onContinue: () => void;
-  onReset: () => void;
+  onOpen: () => void;
   featured?: boolean;
 }) {
   const isCompleted = !!enrollment?.completedAt;
   const inProgress  = !!enrollment && !isCompleted;
-  const progress    = inProgress ? Math.min((enrollment.currentDay / program.duration) * 100, 100) : 0;
+  const doneDays    = isCompleted ? program.duration : Math.max(0, (enrollment?.currentDay ?? 1) - 1);
+  const progress    = enrollment ? Math.round((doneDays / program.duration) * 100) : 0;
+  const diffColor   = DIFFICULTY_COLOR[program.difficulty];
+
+  const statusBadge = isCompleted ? (
+    <span className="flex items-center gap-1 text-[11px] font-semibold" style={{ color: "#10B981" }}>
+      <CheckCircle size={12} /> Completed
+    </span>
+  ) : inProgress ? (
+    <span className="text-[11px] font-semibold" style={{ color: program.color }}>
+      Day {enrollment.currentDay} of {program.duration}
+    </span>
+  ) : (
+    <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>Not started</span>
+  );
 
   if (featured) {
     return (
-      <motion.div
+      <motion.button
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative overflow-hidden rounded-3xl p-6 sm:p-8"
+        onClick={onOpen}
+        className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-left w-full transition-all"
         style={{
           background: `linear-gradient(135deg, ${program.color}22 0%, ${program.color}08 60%, var(--glass-bg-subtle) 100%)`,
           border: `1px solid ${program.color}30`,
         }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${program.color}55`; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${program.color}30`; }}
       >
-        {/* Glow */}
         <div
           className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
           style={{ background: `radial-gradient(circle, ${program.color}30 0%, transparent 70%)`, filter: "blur(32px)" }}
         />
+        <div className="relative">
+          <div className="flex items-center gap-3 flex-wrap mb-3">
+            <span className="text-3xl">{program.emoji}</span>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+              style={{ background: `${program.color}18`, color: program.color, border: `1px solid ${program.color}30` }}>
+              {program.duration} days
+            </span>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+              style={{ background: `${diffColor}18`, color: diffColor, border: `1px solid ${diffColor}30` }}>
+              {program.difficulty}
+            </span>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+              style={{ background: "rgba(124,58,237,0.15)", color: "var(--color-accent-light)", border: "1px solid rgba(124,58,237,0.25)" }}>
+              Featured
+            </span>
+          </div>
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center gap-6">
-          {/* Left */}
-          <div className="flex-1 space-y-3">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-3xl">{program.emoji}</span>
-              <div className="flex gap-2">
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                  style={{ background: `${program.color}18`, color: program.color, border: `1px solid ${program.color}30` }}>
-                  {program.duration} days
-                </span>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                  style={{ background: `${DIFFICULTY_COLOR[program.difficulty]}18`, color: DIFFICULTY_COLOR[program.difficulty], border: `1px solid ${DIFFICULTY_COLOR[program.difficulty]}30` }}>
-                  {program.difficulty}
-                </span>
-                {featured && (
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                    style={{ background: "rgba(124,58,237,0.15)", color: "var(--color-accent-light)", border: "1px solid rgba(124,58,237,0.25)" }}>
-                    Featured
-                  </span>
-                )}
+          <h3 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>{program.title}</h3>
+          <p className="text-sm leading-relaxed max-w-lg mb-4" style={{ color: "var(--text-secondary)" }}>
+            {program.description}
+          </p>
+
+          {/* Progress / status */}
+          {inProgress && (
+            <div className="max-w-xs mb-4">
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--glass-bg-elevated)" }}>
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: program.color }} />
               </div>
             </div>
+          )}
 
-            <h3 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{program.title}</h3>
-            <p className="text-sm leading-relaxed max-w-lg" style={{ color: "var(--text-secondary)" }}>
-              {program.description}
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              {program.habits.map((h) => (
-                <span key={h} className="text-xs px-2.5 py-1 rounded-full"
-                  style={{ background: "var(--glass-bg-default)", border: "1px solid var(--glass-border)", color: "var(--text-muted)" }}>
-                  {h}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Right: action */}
-          <div className="sm:text-right space-y-3 sm:min-w-[160px]">
-            {isCompleted ? (
-              <>
-                <div className="flex items-center gap-2 justify-start sm:justify-end"
-                  style={{ color: "#10B981" }}>
-                  <CheckCircle size={16} />
-                  <span className="text-sm font-semibold">Completed!</span>
-                </div>
-                <button onClick={onReset}
-                  className="flex items-center gap-2 text-xs px-4 py-2 rounded-xl transition-all"
-                  style={{ background: "var(--glass-bg-default)", border: "1px solid var(--glass-border)", color: "var(--text-muted)" }}>
-                  <RotateCcw size={12} /> Restart
-                </button>
-              </>
-            ) : inProgress ? (
-              <>
-                <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-                  Day {enrollment.currentDay} of {program.duration}
-                </p>
-                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--glass-bg-elevated)" }}>
-                  <div className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${progress}%`, background: program.color }} />
-                </div>
-                <button onClick={onContinue}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-                  style={{ background: program.color, boxShadow: `0 0 20px ${program.color}40` }}
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}>
-                  Continue <ChevronRight size={14} />
-                </button>
-              </>
-            ) : (
-              <button onClick={onStart}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-                style={{ background: program.color, boxShadow: `0 0 20px ${program.color}40` }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}>
-                <Play size={14} /> Start Program
-              </button>
-            )}
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
+              style={{ background: program.color, boxShadow: `0 0 20px ${program.color}40` }}>
+              {isCompleted ? "View Program" : inProgress ? "Continue" : "Start Program"} <ChevronRight size={14} />
+            </span>
+            {statusBadge}
           </div>
         </div>
-      </motion.div>
+      </motion.button>
     );
   }
 
-  // Regular card
   return (
-    <motion.div
+    <motion.button
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col rounded-2xl p-5 h-full transition-all duration-200"
+      onClick={onOpen}
+      className="flex flex-col rounded-2xl p-5 h-full w-full text-left transition-all duration-200"
       style={{
         background: "var(--glass-bg-default)",
         border: `1px solid var(--glass-border)`,
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
       }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = `${program.color}35`; }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--glass-border)"; }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${program.color}35`; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--glass-border)"; }}
     >
       <div className="flex items-start justify-between mb-3">
         <span className="text-2xl">{program.emoji}</span>
@@ -171,7 +142,7 @@ function ProgramCard({
             {program.duration}d
           </span>
           <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-            style={{ background: `${DIFFICULTY_COLOR[program.difficulty]}18`, color: DIFFICULTY_COLOR[program.difficulty], border: `1px solid ${DIFFICULTY_COLOR[program.difficulty]}30` }}>
+            style={{ background: `${diffColor}18`, color: diffColor, border: `1px solid ${diffColor}30` }}>
             {program.difficulty}
           </span>
         </div>
@@ -182,59 +153,33 @@ function ProgramCard({
         {program.description.slice(0, 100)}…
       </p>
 
-      {isCompleted ? (
-        <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#10B981" }}>
-            <CheckCircle size={13} /> Completed
-          </div>
-          <button onClick={onReset} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs transition-all"
-            style={{ background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)", color: "var(--text-muted)" }}>
-            <RotateCcw size={11} /> Restart
-          </button>
-        </div>
-      ) : inProgress ? (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Day {enrollment.currentDay} / {program.duration}</span>
-            <span className="text-xs font-semibold" style={{ color: program.color }}>{Math.round(progress)}%</span>
-          </div>
+      {/* Progress bar when in progress */}
+      {inProgress && (
+        <div className="mb-3">
           <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--glass-bg-elevated)" }}>
-            <div className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${progress}%`, background: program.color }} />
+            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: program.color }} />
           </div>
-          <button onClick={onContinue}
-            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold text-white transition-all"
-            style={{ background: program.color }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}>
-            Continue <ChevronRight size={12} />
-          </button>
         </div>
-      ) : (
-        <button onClick={onStart}
-          className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold text-white transition-all"
-          style={{ background: program.color }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}>
-          <Play size={12} /> Start Program
-        </button>
       )}
-    </motion.div>
+
+      <div className="flex items-center justify-between">
+        {statusBadge}
+        <ChevronRight size={14} style={{ color: "var(--text-muted)" }} />
+      </div>
+    </motion.button>
   );
 }
 
-// ── Article Card ─────────────────────────────────────────────────────────────
+// ── Article Card (summary trigger — opens reader modal) ──────────────────────
 
-function ArticleCard({ article, index }: { article: (typeof ARTICLES)[number]; index: number }) {
-  const [expanded, setExpanded] = useState(false);
-
+function ArticleCard({ article, index, onOpen }: { article: (typeof ARTICLES)[number]; index: number; onOpen: () => void }) {
   return (
-    <motion.div
+    <motion.button
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      onClick={() => setExpanded((v) => !v)}
-      className="rounded-2xl p-5 cursor-pointer transition-all duration-200"
+      onClick={onOpen}
+      className="rounded-2xl p-5 text-left w-full transition-all duration-200"
       style={{
         background: "var(--glass-bg-default)",
         border: "1px solid var(--glass-border)",
@@ -242,12 +187,12 @@ function ArticleCard({ article, index }: { article: (typeof ARTICLES)[number]; i
         WebkitBackdropFilter: "blur(12px)",
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = `${article.color}35`;
-        (e.currentTarget as HTMLDivElement).style.background = "var(--glass-bg-elevated)";
+        e.currentTarget.style.borderColor = `${article.color}35`;
+        e.currentTarget.style.background = "var(--glass-bg-elevated)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = "var(--glass-border)";
-        (e.currentTarget as HTMLDivElement).style.background = "var(--glass-bg-default)";
+        e.currentTarget.style.borderColor = "var(--glass-border)";
+        e.currentTarget.style.background = "var(--glass-bg-default)";
       }}
     >
       <div className="flex items-start gap-3 mb-3">
@@ -268,38 +213,25 @@ function ArticleCard({ article, index }: { article: (typeof ARTICLES)[number]; i
         </div>
       </div>
 
-      <AnimatePresence>
-        {expanded ? (
-          <motion.p
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="text-xs leading-relaxed overflow-hidden"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            {article.excerpt}
-          </motion.p>
-        ) : (
-          <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--text-muted)" }}>
-            {article.excerpt}
-          </p>
-        )}
-      </AnimatePresence>
-
-      <p className="text-[10px] mt-2 font-medium" style={{ color: article.color }}>
-        {expanded ? "Show less ↑" : "Read more ↓"}
+      <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--text-muted)" }}>
+        {article.excerpt}
       </p>
-    </motion.div>
+
+      <p className="text-[10px] mt-2 font-medium flex items-center gap-1" style={{ color: article.color }}>
+        Read article <ChevronRight size={11} />
+      </p>
+    </motion.button>
   );
 }
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function ExplorePage() {
-  const [tab, setTab]                     = useState<Tab>("programs");
+  const [tab, setTab]                       = useState<Tab>("programs");
   const [categoryFilter, setCategoryFilter] = useState<ArticleCategory | "All">("All");
-  const [enrolledMap, setEnrolledMap]     = useState<Record<string, UserProgram>>({});
-  const [loadingId, setLoadingId]         = useState<string | null>(null);
+  const [enrolledMap, setEnrolledMap]       = useState<Record<string, UserProgram>>({});
+  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
+  const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
 
   useEffect(() => {
     getUserPrograms()
@@ -312,36 +244,39 @@ export default function ExplorePage() {
   }, []);
 
   async function handleStart(programId: string) {
-    setLoadingId(programId);
+    // optimistic
+    const optimistic: UserProgram = {
+      id: `temp-${programId}`,
+      programId,
+      startedAt: new Date().toISOString(),
+      currentDay: 1,
+      completedAt: null,
+    };
+    setEnrolledMap((prev) => ({ ...prev, [programId]: optimistic }));
     try {
       const enrolled = await enrollProgram(programId);
       setEnrolledMap((prev) => ({ ...prev, [programId]: enrolled }));
-    } finally {
-      setLoadingId(null);
+    } catch {
+      setEnrolledMap((prev) => { const n = { ...prev }; delete n[programId]; return n; });
     }
   }
 
-  async function handleContinue(programId: string, duration: number) {
+  async function handleCompleteDay(programId: string, duration: number) {
     const current = enrolledMap[programId];
     if (!current) return;
     const nextDay = current.currentDay + 1;
-    const optimistic: UserProgram = { ...current, currentDay: nextDay };
-    setEnrolledMap((prev) => ({ ...prev, [programId]: optimistic }));
     if (nextDay > duration) {
+      setEnrolledMap((prev) => ({ ...prev, [programId]: { ...current, completedAt: new Date().toISOString() } }));
       await completeProgram(programId);
-      setEnrolledMap((prev) => ({ ...prev, [programId]: { ...optimistic, completedAt: new Date().toISOString() } }));
     } else {
+      setEnrolledMap((prev) => ({ ...prev, [programId]: { ...current, currentDay: nextDay } }));
       await updateProgramDay(programId, nextDay);
     }
   }
 
   async function handleReset(programId: string) {
+    setEnrolledMap((prev) => { const n = { ...prev }; delete n[programId]; return n; });
     await unenrollProgram(programId);
-    setEnrolledMap((prev) => {
-      const next = { ...prev };
-      delete next[programId];
-      return next;
-    });
   }
 
   const featuredProgram = PROGRAMS.find((p) => p.featured);
@@ -350,6 +285,9 @@ export default function ExplorePage() {
   const filteredArticles = categoryFilter === "All"
     ? ARTICLES
     : ARTICLES.filter((a) => a.category === categoryFilter);
+
+  const selectedProgram = PROGRAMS.find((p) => p.id === selectedProgramId) ?? null;
+  const selectedArticle = ARTICLES.find((a) => a.id === selectedArticleId) ?? null;
 
   return (
     <div className="space-y-6">
@@ -367,10 +305,7 @@ export default function ExplorePage() {
         </div>
 
         {/* Tab toggle */}
-        <div
-          className="flex gap-1 p-1 rounded-xl"
-          style={{ background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)" }}
-        >
+        <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)" }}>
           {([
             { key: "programs" as Tab, icon: <Layers size={13} />, label: "Programs" },
             { key: "articles" as Tab, icon: <BookOpen size={13} />, label: "Articles" },
@@ -402,19 +337,15 @@ export default function ExplorePage() {
             transition={{ duration: 0.2 }}
             className="space-y-5"
           >
-            {/* Featured hero card */}
             {featuredProgram && (
               <ProgramCard
                 program={featuredProgram}
                 enrollment={enrolledMap[featuredProgram.id]}
-                onStart={() => handleStart(featuredProgram.id)}
-                onContinue={() => handleContinue(featuredProgram.id, featuredProgram.duration)}
-                onReset={() => handleReset(featuredProgram.id)}
+                onOpen={() => setSelectedProgramId(featuredProgram.id)}
                 featured
               />
             )}
 
-            {/* Grid of other programs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {otherPrograms.map((program, i) => (
                 <motion.div
@@ -426,9 +357,7 @@ export default function ExplorePage() {
                   <ProgramCard
                     program={program}
                     enrollment={enrolledMap[program.id]}
-                    onStart={() => handleStart(program.id)}
-                    onContinue={() => handleContinue(program.id, program.duration)}
-                    onReset={() => handleReset(program.id)}
+                    onOpen={() => setSelectedProgramId(program.id)}
                   />
                 </motion.div>
               ))}
@@ -443,7 +372,6 @@ export default function ExplorePage() {
             transition={{ duration: 0.2 }}
             className="space-y-5"
           >
-            {/* Category filter pills */}
             <div className="flex gap-2 flex-wrap">
               {(["All", ...CATEGORIES] as (ArticleCategory | "All")[]).map((cat) => (
                 <button
@@ -461,17 +389,16 @@ export default function ExplorePage() {
               ))}
             </div>
 
-            {/* Article grid */}
-            <motion.div
-              layout
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-            >
-              <AnimatePresence>
-                {filteredArticles.map((article, i) => (
-                  <ArticleCard key={article.id} article={article} index={i} />
-                ))}
-              </AnimatePresence>
-            </motion.div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredArticles.map((article, i) => (
+                <ArticleCard
+                  key={article.id}
+                  article={article}
+                  index={i}
+                  onOpen={() => setSelectedArticleId(article.id)}
+                />
+              ))}
+            </div>
 
             {filteredArticles.length === 0 && (
               <div className="text-center py-12">
@@ -482,12 +409,22 @@ export default function ExplorePage() {
         )}
       </AnimatePresence>
 
-      {loadingId && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl text-sm font-medium text-white"
-          style={{ background: "var(--color-accent)", boxShadow: "0 4px 20px rgba(124,58,237,0.4)" }}>
-          Starting program…
-        </div>
-      )}
+      {/* Modals */}
+      <ProgramDetailModal
+        program={selectedProgram}
+        enrollment={selectedProgram ? enrolledMap[selectedProgram.id] : undefined}
+        open={!!selectedProgram}
+        onClose={() => setSelectedProgramId(null)}
+        onStart={() => selectedProgram && handleStart(selectedProgram.id)}
+        onCompleteDay={() => selectedProgram && handleCompleteDay(selectedProgram.id, selectedProgram.duration)}
+        onReset={() => selectedProgram && handleReset(selectedProgram.id)}
+      />
+
+      <ArticleModal
+        article={selectedArticle}
+        open={!!selectedArticle}
+        onClose={() => setSelectedArticleId(null)}
+      />
     </div>
   );
 }
