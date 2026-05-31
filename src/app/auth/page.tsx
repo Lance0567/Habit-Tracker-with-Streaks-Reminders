@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Zap, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
@@ -68,7 +68,8 @@ function InputField({
   );
 }
 
-export default function SignInPage() {
+// Inner component — useSearchParams requires a Suspense boundary in Next.js 14
+function SignInContent() {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw]     = useState(false);
@@ -78,7 +79,7 @@ export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Show errors forwarded from the OAuth callback (e.g. PKCE failure details)
+  // Show errors forwarded from the OAuth callback
   useEffect(() => {
     const urlError = searchParams.get("error");
     if (urlError) setError(decodeURIComponent(urlError));
@@ -143,14 +144,12 @@ export default function SignInPage() {
             <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Sign in to your account</p>
           </div>
 
-          {/* Error */}
           {error && (
             <p className="text-xs px-3 py-2.5 rounded-lg" style={{ background: "rgba(244,63,94,0.10)", border: "1px solid rgba(244,63,94,0.25)", color: "#F43F5E" }}>
               {error}
             </p>
           )}
 
-          {/* Email / Password form */}
           <form onSubmit={handleEmailSignIn} className="space-y-4">
             <InputField id="email" label="Email" type="email" value={email} onChange={setEmail}
               placeholder="you@example.com" icon={<Mail size={15} />} />
@@ -174,14 +173,12 @@ export default function SignInPage() {
             </button>
           </form>
 
-          {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px" style={{ background: "var(--divider)" }} />
             <span className="text-xs" style={{ color: "var(--text-muted)" }}>or</span>
             <div className="flex-1 h-px" style={{ background: "var(--divider)" }} />
           </div>
 
-          {/* Google */}
           <button onClick={handleGoogle} disabled={gLoading || loading}
             className="w-full flex items-center justify-center gap-2.5 py-3 rounded-[var(--radius-md)] text-sm font-medium transition-all duration-200 disabled:opacity-50"
             style={{ background: "var(--glass-bg-elevated)", border: "1px solid var(--glass-border-hover)", color: "var(--text-primary)" }}
@@ -192,7 +189,6 @@ export default function SignInPage() {
           </button>
         </div>
 
-        {/* Footer link */}
         <p className="text-center text-xs mt-5" style={{ color: "var(--text-muted)" }}>
           Don&apos;t have an account?{" "}
           <Link href="/auth/signup" className="font-semibold transition-colors"
@@ -204,5 +200,14 @@ export default function SignInPage() {
         </p>
       </motion.div>
     </div>
+  );
+}
+
+// Suspense wrapper required by Next.js 14 when useSearchParams is used in a page
+export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInContent />
+    </Suspense>
   );
 }
