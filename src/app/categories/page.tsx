@@ -201,6 +201,7 @@ export default function CategoriesPage() {
 
       {/* Create / Edit modal */}
       <CategoryForm
+        key={editTarget?.id ?? "new"}
         open={formOpen}
         onClose={() => setFormOpen(false)}
         initial={editTarget ?? undefined}

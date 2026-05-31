@@ -1,8 +1,26 @@
-import type { Habit } from "@/types";
+import type { Habit, UserProgram } from "@/types";
+import type { Program } from "@/lib/programs";
 import { isHabitDueOnDate } from "./streaks";
 
 type TimeoutHandle = ReturnType<typeof setTimeout>;
 const scheduled = new Map<string, TimeoutHandle>();
+
+// ── Program reminder localStorage helpers ────────────────────────────────────
+
+export function getProgramReminderTime(programId: string): string | null {
+  try {
+    const stored = JSON.parse(localStorage.getItem("program-reminders") ?? "{}");
+    return stored[programId] ?? null;
+  } catch { return null; }
+}
+
+export function setProgramReminderTime(programId: string, time: string | null): void {
+  try {
+    const stored = JSON.parse(localStorage.getItem("program-reminders") ?? "{}");
+    if (time === null) delete stored[programId]; else stored[programId] = time;
+    localStorage.setItem("program-reminders", JSON.stringify(stored));
+  } catch {}
+}
 
 export async function requestPermission(): Promise<NotificationPermission> {
   if (!("Notification" in window)) return "denied";
@@ -74,4 +92,38 @@ export function scheduleReminders(habits: Habit[]): void {
 export function clearAllReminders(): void {
   Array.from(scheduled.values()).forEach((handle) => clearTimeout(handle));
   scheduled.clear();
+}
+
+// ── Program reminder scheduler ────────────────────────────────────────────────
+
+export function scheduleProgramReminders(
+  userPrograms: UserProgram[],
+  programs: Program[]
+): void {
+  for (const up of userPrograms) {
+    if (up.completedAt) continue;
+    const reminderTime = getProgramReminderTime(up.programId);
+    if (!reminderTime) continue;
+    const program = programs.find((p) => p.id === up.programId);
+    if (!program) continue;
+
+    const [h, m] = reminderTime.split(":").map(Number);
+    const fireAt = new Date();
+    fireAt.setHours(h, m, 0, 0);
+    if (fireAt <= new Date()) fireAt.setDate(fireAt.getDate() + 1);
+
+    const key = `prog-${up.programId}`;
+    const existing = scheduled.get(key);
+    if (existing) clearTimeout(existing);
+
+    scheduled.set(key, setTimeout(() => {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+      new Notification(`📋 ${program.title}`, {
+        body: `Day ${up.currentDay} of ${program.duration} — keep your streak going!`,
+        icon: "/icon-192.png",
+        tag: key,
+        data: { url: `/explore/programs/${up.programId}` },
+      });
+    }, fireAt.getTime() - Date.now()));
+  }
 }

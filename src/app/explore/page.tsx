@@ -2,20 +2,21 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { BookOpen, Layers, CheckCircle, Clock, ChevronRight, Calendar } from "lucide-react";
+import { BookOpen, Layers, CheckCircle, Clock, ChevronRight, Calendar, Bell, BellOff } from "lucide-react";
 import { PROGRAMS, totalTasks } from "@/lib/programs";
 import { ARTICLES, type ArticleCategory } from "@/lib/articles";
 import { getUserPrograms, getSavedPrograms } from "@/lib/storage";
+import { getProgramReminderTime, setProgramReminderTime, scheduleProgramReminders } from "@/lib/notifications";
 import type { UserProgram } from "@/types";
 
 type Tab = "programs" | "articles";
 type ProgramSubTab = "my" | "find" | "saved" | "completed";
 
 const SUB_TABS: { key: ProgramSubTab; label: string }[] = [
-  { key: "my",        label: "My Plans" },
-  { key: "find",      label: "Find Plans" },
+  { key: "my",        label: "My Programs" },
+  { key: "find",      label: "Find Programs" },
   { key: "saved",     label: "Saved" },
   { key: "completed", label: "Completed" },
 ];
@@ -27,6 +28,17 @@ const DIFFICULTY_COLOR: Record<string, string> = {
   Medium:   "#F59E0B",
   Hard:     "#F43F5E",
 };
+
+// Mix a hex colour toward black (amount 0–1). Used to make tinted pill text
+// read crisply on light backgrounds, where full-saturation brand colours wash out.
+function darken(hex: string, amount: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const f = (c: number) => Math.round(c * (1 - amount)).toString(16).padStart(2, "0");
+  return `#${f(r)}${f(g)}${f(b)}`;
+}
 
 // ── Program Card (links to detail page) ──────────────────────────────────────
 
@@ -44,6 +56,39 @@ function ProgramCard({
   const href = `/explore/programs/${program.id}${from ? `?from=${from}` : ""}`;
   const isCompleted = !!enrollment?.completedAt;
   const inProgress  = !!enrollment && !isCompleted;
+
+  // Reminder state — only relevant on My Plans cards
+  const [reminderTime, setReminderTime] = useState<string | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
+  const [pickerValue, setPickerValue] = useState("09:00");
+
+  useEffect(() => {
+    if (from === "my") setReminderTime(getProgramReminderTime(program.id));
+  }, [from, program.id]);
+
+  function handleBellClick(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (reminderTime) {
+      setProgramReminderTime(program.id, null);
+      setReminderTime(null);
+    } else {
+      setShowPicker(true);
+    }
+  }
+
+  function handleSetReminder(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setProgramReminderTime(program.id, pickerValue);
+    setReminderTime(pickerValue);
+    setShowPicker(false);
+    if (enrollment) {
+      getUserPrograms()
+        .then((ups) => scheduleProgramReminders(ups, PROGRAMS))
+        .catch(() => {});
+    }
+  }
   const completedSet = new Set(enrollment?.completedTasks ?? []);
   const isDayDone = (d: number) => program.days[d - 1].tasks.every((t) => completedSet.has(`${d}:${t.id}`));
   let activeDay = program.duration;
@@ -64,53 +109,157 @@ function ProgramCard({
     <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>Not started</span>
   );
 
+  // Detect theme for the featured card so gradients look vivid in both modes
+  const [isLight, setIsLight] = useState(false);
+  useEffect(() => {
+    const read = () => setIsLight(document.documentElement.getAttribute("data-theme") === "light");
+    read();
+    const obs = new MutationObserver(read);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
+
   if (featured) {
+    const bgFrom = isLight ? `${program.color}38` : `${program.color}40`;
+    const bgMid  = isLight ? `${program.color}18` : `${program.color}20`;
+    const bgTo   = isLight ? `${program.color}08` : "transparent";
+    const borderCol = isLight ? `${program.color}55` : `${program.color}40`;
+    const textColor  = isLight ? "#1a1a2e"  : "#ffffff";
+    const textMuted  = isLight ? "#3d3d5c"  : "rgba(255,255,255,0.65)";
+    const trackBg    = isLight ? `${program.color}20` : "rgba(255,255,255,0.1)";
+    // Pill text: darken on light bg so each tag stays high-contrast; keep vivid on dark.
+    const ACCENT     = "#7C3AED";
+    const dayText      = isLight ? darken(program.color, 0.34) : program.color;
+    const diffText     = isLight ? darken(diffColor, 0.34)     : diffColor;
+    const featuredText = isLight ? darken(ACCENT, 0.28)        : "var(--color-accent)";
+    const labelColor   = isLight ? darken(program.color, 0.34) : program.color;
+
     return (
       <Link
         href={href}
-        className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-left block w-full transition-all"
+        className="relative overflow-hidden rounded-3xl text-left block w-full group transition-all duration-300"
         style={{
-          background: `linear-gradient(135deg, ${program.color}22 0%, ${program.color}08 60%, var(--glass-bg-subtle) 100%)`,
-          border: `1px solid ${program.color}30`,
+          background: `linear-gradient(130deg, ${bgFrom} 0%, ${bgMid} 45%, ${bgTo} 100%)`,
+          border: `1px solid ${borderCol}`,
+          boxShadow: isLight
+            ? `0 4px 32px ${program.color}20, inset 0 1px 0 rgba(255,255,255,0.6)`
+            : `0 4px 32px ${program.color}25, inset 0 1px 0 rgba(255,255,255,0.08)`,
         }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = `${program.color}55`; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = `${program.color}30`; }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.boxShadow = `0 8px 48px ${program.color}35, inset 0 1px 0 rgba(255,255,255,0.12)`; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.boxShadow = isLight ? `0 4px 32px ${program.color}20, inset 0 1px 0 rgba(255,255,255,0.6)` : `0 4px 32px ${program.color}25, inset 0 1px 0 rgba(255,255,255,0.08)`; }}
       >
-        <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
-          style={{ background: `radial-gradient(circle, ${program.color}30 0%, transparent 70%)`, filter: "blur(32px)" }} />
-        <div className="relative">
-          <div className="flex items-center gap-3 flex-wrap mb-3">
-            <span className="text-3xl">{program.emoji}</span>
-            <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full"
-              style={{ background: `${program.color}18`, color: program.color, border: `1px solid ${program.color}30` }}>
-              <Calendar size={11} /> {program.duration} days
-            </span>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-              style={{ background: `${diffColor}18`, color: diffColor, border: `1px solid ${diffColor}30` }}>
-              {program.difficulty}
-            </span>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-              style={{ background: "rgba(124,58,237,0.15)", color: "var(--color-accent-light)", border: "1px solid rgba(124,58,237,0.25)" }}>
-              Featured
-            </span>
-          </div>
-          <h3 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>{program.title}</h3>
-          <p className="text-sm leading-relaxed max-w-lg mb-4" style={{ color: "var(--text-secondary)" }}>
-            {program.description}
-          </p>
-          {inProgress && (
-            <div className="max-w-xs mb-4">
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--glass-bg-elevated)" }}>
-                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: program.color }} />
-              </div>
+        {/* Ambient glow blobs */}
+        <div className="absolute -top-12 -right-12 w-56 h-56 rounded-full pointer-events-none"
+          style={{ background: `radial-gradient(circle, ${program.color}${isLight ? "28" : "35"} 0%, transparent 70%)`, filter: "blur(40px)" }} />
+        <div className="absolute bottom-0 left-1/3 w-40 h-40 rounded-full pointer-events-none"
+          style={{ background: `radial-gradient(circle, ${program.color}15 0%, transparent 70%)`, filter: "blur(32px)" }} />
+
+        {/* Dot-grid decoration on the right half */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ opacity: isLight ? 0.18 : 0.12 }}>
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id={`dots-${program.id}`} x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1.5" fill={program.color} />
+              </pattern>
+            </defs>
+            <rect x="45%" width="55%" height="100%" fill={`url(#dots-${program.id})`} />
+          </svg>
+        </div>
+
+        <div className="relative flex flex-col sm:flex-row gap-6 p-6 sm:p-8">
+          {/* ── Left: content ── */}
+          <div className="flex-1 min-w-0 flex flex-col justify-between gap-4">
+            {/* Badges row */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
+                style={{ background: `${program.color}${isLight ? "1f" : "25"}`, color: dayText, border: `1px solid ${program.color}${isLight ? "40" : "45"}` }}>
+                <Calendar size={10} /> {program.duration} days
+              </span>
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full"
+                style={{ background: `${diffColor}${isLight ? "1f" : "25"}`, color: diffText, border: `1px solid ${diffColor}${isLight ? "40" : "50"}` }}>
+                {program.difficulty}
+              </span>
+              <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
+                style={{ background: isLight ? "rgba(124,58,237,0.12)" : "rgba(124,58,237,0.22)", color: featuredText, border: `1px solid rgba(124,58,237,${isLight ? "0.38" : "0.5"})` }}>
+                ★ Featured
+              </span>
             </div>
-          )}
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
-              style={{ background: program.color, boxShadow: `0 0 20px ${program.color}40` }}>
-              {isCompleted ? "View Program" : inProgress ? "Continue" : "Start Program"} <ChevronRight size={14} />
+
+            {/* Title + description */}
+            <div>
+              <h3 className="text-2xl font-black tracking-tight mb-2 leading-tight" style={{ color: textColor }}>
+                {program.title}
+              </h3>
+              <p className="text-sm leading-relaxed max-w-sm" style={{ color: textMuted }}>
+                {program.description}
+              </p>
+            </div>
+
+            {/* Progress */}
+            {inProgress && (
+              <div className="max-w-xs">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[11px] font-semibold" style={{ color: labelColor }}>
+                    Day {activeDay} of {program.duration}
+                  </span>
+                  <span className="text-[11px] font-bold tabular-nums" style={{ color: labelColor }}>
+                    {progress}%
+                  </span>
+                </div>
+                <div className="h-2 rounded-full overflow-hidden relative" style={{ background: trackBg }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-700 relative"
+                    style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${program.color}cc, ${program.color})` }}
+                  >
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 border-white"
+                      style={{ background: program.color, boxShadow: `0 0 6px ${program.color}` }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CTA */}
+            <div className="flex items-center gap-3">
+              <span
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all duration-200 group-hover:scale-[1.02]"
+                style={{
+                  background: `linear-gradient(135deg, ${program.color}, ${program.color}cc)`,
+                  boxShadow: `0 4px 16px ${program.color}50`,
+                }}
+              >
+                {isCompleted ? "View Program" : inProgress ? "Continue" : "Start Program"}
+                <ChevronRight size={15} />
+              </span>
+              {!inProgress && !isCompleted && (
+                <span className="text-[11px] font-medium" style={{ color: textMuted }}>Free · No commitment</span>
+              )}
+            </div>
+          </div>
+
+          {/* ── Right: decorative emoji orb ── */}
+          <div className="hidden sm:flex flex-shrink-0 items-center justify-center w-44 relative">
+            {/* Outer ring */}
+            <div className="absolute w-36 h-36 rounded-full"
+              style={{ border: `1px solid ${program.color}35`, animation: "spin 18s linear infinite" }} />
+            {/* Inner ring */}
+            <div className="absolute w-24 h-24 rounded-full"
+              style={{ border: `1px dashed ${program.color}50` }} />
+            {/* Glow base */}
+            <div className="absolute w-28 h-28 rounded-full"
+              style={{ background: `radial-gradient(circle, ${program.color}40 0%, transparent 70%)`, filter: "blur(16px)" }} />
+            {/* Emoji */}
+            <span
+              className="relative text-6xl select-none"
+              style={{ filter: `drop-shadow(0 0 20px ${program.color}80)` }}
+            >
+              {program.emoji}
             </span>
-            {statusBadge}
+            {/* Orbiting dot */}
+            <div className="absolute w-36 h-36"
+              style={{ animation: "spin 8s linear infinite" }}>
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full"
+                style={{ background: program.color, boxShadow: `0 0 8px ${program.color}` }} />
+            </div>
           </div>
         </div>
       </Link>
@@ -156,7 +305,68 @@ function ProgramCard({
       )}
       <div className="flex items-center justify-between">
         {statusBadge}
-        <ChevronRight size={14} style={{ color: "var(--text-muted)" }} />
+        <div className="flex items-center gap-1.5">
+          {from === "my" && (
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={handleBellClick}
+                title={reminderTime ? `Reminder at ${reminderTime} — click to remove` : "Set daily reminder"}
+                className="w-6 h-6 flex items-center justify-center rounded-lg transition-all"
+                style={{
+                  background: reminderTime ? "rgba(124,58,237,0.15)" : "var(--glass-bg-subtle)",
+                  border: `1px solid ${reminderTime ? "rgba(124,58,237,0.35)" : "var(--glass-border)"}`,
+                  color: reminderTime ? "var(--color-accent)" : "var(--text-muted)",
+                }}
+              >
+                {reminderTime ? <Bell size={11} /> : <BellOff size={11} />}
+              </button>
+              {showPicker && (
+                <div
+                  className="absolute bottom-8 right-0 z-20 rounded-xl p-3 flex flex-col gap-2"
+                  style={{
+                    background: "var(--popup-bg)",
+                    border: "1px solid var(--popup-border)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
+                    minWidth: 160,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <p className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>
+                    Daily reminder time
+                  </p>
+                  <input
+                    type="time"
+                    value={pickerValue}
+                    onChange={(e) => setPickerValue(e.target.value)}
+                    className="w-full rounded-lg px-2 py-1 text-xs font-mono outline-none"
+                    style={{
+                      background: "var(--glass-bg-subtle)",
+                      border: "1px solid var(--glass-border)",
+                      color: "var(--text-primary)",
+                    }}
+                  />
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowPicker(false); }}
+                      className="flex-1 text-[11px] py-1 rounded-lg"
+                      style={{ background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)", color: "var(--text-muted)" }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSetReminder}
+                      className="flex-1 text-[11px] py-1 rounded-lg font-semibold"
+                      style={{ background: "var(--color-accent)", color: "#fff" }}
+                    >
+                      Set
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <ChevronRight size={14} style={{ color: "var(--text-muted)" }} />
+        </div>
       </div>
     </Link>
   );
@@ -215,6 +425,7 @@ function ArticleCard({ article }: { article: (typeof ARTICLES)[number] }) {
 
 function ExploreContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialTab: Tab = searchParams.get("tab") === "articles" ? "articles" : "programs";
   const plansParam = searchParams.get("plans");
   const initialSubTab: ProgramSubTab =
@@ -223,6 +434,16 @@ function ExploreContent() {
       : "find";
   const [tab, setTab] = useState<Tab>(initialTab);
   const [subTab, setSubTab] = useState<ProgramSubTab>(initialSubTab);
+
+  function switchTab(next: Tab) {
+    setTab(next);
+    router.replace(`/explore?tab=${next}`, { scroll: false });
+  }
+
+  function switchSubTab(next: ProgramSubTab) {
+    setSubTab(next);
+    router.replace(`/explore?tab=programs&plans=${next}`, { scroll: false });
+  }
   const [categoryFilter, setCategoryFilter] = useState<ArticleCategory | "All">("All");
   const [enrolledMap, setEnrolledMap] = useState<Record<string, UserProgram>>({});
   const [savedIds, setSavedIds] = useState<string[]>([]);
@@ -282,7 +503,7 @@ function ExploreContent() {
           ]).map(({ key, icon, label }) => (
             <button
               key={key}
-              onClick={() => setTab(key)}
+              onClick={() => switchTab(key)}
               className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200"
               style={
                 tab === key
@@ -311,7 +532,7 @@ function ExploreContent() {
                 return (
                   <button
                     key={key}
-                    onClick={() => setSubTab(key)}
+                    onClick={() => switchSubTab(key)}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200"
                     style={
                       subTab === key
@@ -343,7 +564,7 @@ function ExploreContent() {
               <div className="text-center py-12">
                 <p className="text-sm" style={{ color: "var(--text-muted)" }}>{EMPTY_MESSAGE[subTab]}</p>
                 {(subTab === "my" || subTab === "saved") && (
-                  <button onClick={() => setSubTab("find")}
+                  <button onClick={() => switchSubTab("find")}
                     className="mt-3 text-sm font-semibold" style={{ color: "var(--color-accent-light)" }}>
                     Browse Find Plans →
                   </button>

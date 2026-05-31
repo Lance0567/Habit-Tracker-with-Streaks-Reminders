@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
+import { cookies } from "next/headers";
 import { AppShell } from "@/components/layout/AppShell";
 
 const inter = Inter({
@@ -8,24 +9,24 @@ const inter = Inter({
   display: "swap",
 });
 
-/**
- * This script runs synchronously in <head> BEFORE React hydrates.
- * It reads the persisted theme from localStorage and applies data-theme
- * to <html> immediately, eliminating the dark→light flash on refresh.
- */
-const themeInitScript = `(function(){try{var t=localStorage.getItem('habitflow-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Read the theme cookie server-side so the very first byte of HTML already
+  // carries the correct data-theme attribute — zero flash, even before JS loads.
+  const cookieStore = cookies();
+  const themeCookie = cookieStore.get("habitflow-theme")?.value;
+  const theme: "dark" | "light" =
+    themeCookie === "light" ? "light" : "dark";
+
   return (
-    <html lang="en" className={inter.variable}>
-      <head>
-        {/* Blocking theme initializer — must be first to prevent flash */}
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
+    // suppressHydrationWarning: React sees data-theme on <html> added by server
+    // but the client may render a different default before hydration — suppress
+    // the mismatch warning since the cookie ensures they always match.
+    <html lang="en" className={inter.variable} data-theme={theme} suppressHydrationWarning>
+      <head />
       <body className="min-h-screen antialiased">
         <AppShell>{children}</AppShell>
       </body>

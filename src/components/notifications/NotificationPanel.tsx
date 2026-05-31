@@ -1,11 +1,16 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, BellOff, Clock, X, ArrowRight } from "lucide-react";
+import { Bell, BellOff, Clock, X, ArrowRight, Compass } from "lucide-react";
 import { useHabitStore } from "@/store/habitStore";
 import { getIcon } from "@/lib/icons";
 import { format } from "date-fns";
 import Link from "next/link";
+import { PROGRAMS } from "@/lib/programs";
+import { getUserPrograms } from "@/lib/storage";
+import { getProgramReminderTime, setProgramReminderTime } from "@/lib/notifications";
+import type { UserProgram } from "@/types";
 
 interface Props {
   open: boolean;
@@ -19,6 +24,34 @@ export function NotificationPanel({ open, onClose }: Props) {
 
   const todayDow      = new Date().getDay();
   const notificationsOn = settings?.notificationsEnabled ?? false;
+
+  // Program reminders state
+  const [programReminders, setProgramReminders] = useState<
+    Array<{ enrollment: UserProgram; programTitle: string; programEmoji: string; time: string }>
+  >([]);
+
+  useEffect(() => {
+    if (!open) return;
+    getUserPrograms()
+      .then((enrollments) => {
+        const items = enrollments
+          .filter((e) => !e.completedAt)
+          .flatMap((e) => {
+            const t = getProgramReminderTime(e.programId);
+            if (!t) return [];
+            const prog = PROGRAMS.find((p) => p.id === e.programId);
+            if (!prog) return [];
+            return [{ enrollment: e, programTitle: prog.title, programEmoji: prog.emoji, time: t }];
+          });
+        setProgramReminders(items);
+      })
+      .catch(() => {});
+  }, [open]);
+
+  function removeProgReminder(programId: string) {
+    setProgramReminderTime(programId, null);
+    setProgramReminders((prev) => prev.filter((r) => r.enrollment.programId !== programId));
+  }
 
   const upcoming = habits
     .filter((h) => !h.archived)
@@ -156,71 +189,121 @@ export function NotificationPanel({ open, onClose }: Props) {
                 </div>
               ) : (
                 /* Reminder list */
-                <ul className="py-1.5 max-h-64 overflow-y-auto">
-                  {upcoming.map(({ habit, reminder }) => {
-                    const Icon = getIcon(habit.icon);
-                    const [hh, mm] = reminder.time.split(":").map(Number);
-                    const fireDate = new Date();
-                    fireDate.setHours(hh, mm, 0, 0);
-                    const isPast = fireDate < new Date();
+                <div className="max-h-72 overflow-y-auto">
+                  <ul className="py-1.5">
+                    {upcoming.map(({ habit, reminder }) => {
+                      const Icon = getIcon(habit.icon);
+                      const [hh, mm] = reminder.time.split(":").map(Number);
+                      const fireDate = new Date();
+                      fireDate.setHours(hh, mm, 0, 0);
+                      const isPast = fireDate < new Date();
 
-                    return (
-                      <li
-                        key={`${habit.id}:${reminder.id}`}
-                        className="flex items-center gap-3 px-4 py-2.5 transition-colors"
-                        style={{
-                          opacity: isPast ? 0.5 : 1,
-                          borderBottom: "1px solid var(--divider)",
-                        }}
-                      >
-                        <span
-                          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                      return (
+                        <li
+                          key={`${habit.id}:${reminder.id}`}
+                          className="flex items-center gap-3 px-4 py-2.5 transition-colors"
                           style={{
-                            background: `${habit.color}18`,
-                            border: `1px solid ${habit.color}30`,
-                            color: habit.color,
+                            opacity: isPast ? 0.5 : 1,
+                            borderBottom: "1px solid var(--divider)",
                           }}
                         >
-                          <Icon size={15} />
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p
-                            className="text-xs font-medium truncate"
-                            style={{ color: "var(--text-primary)" }}
+                          <span
+                            className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                            style={{
+                              background: `${habit.color}18`,
+                              border: `1px solid ${habit.color}30`,
+                              color: habit.color,
+                            }}
                           >
-                            {habit.name}
-                          </p>
-                          <p
-                            className="flex items-center gap-1 mt-0.5"
-                            style={{ fontSize: 10, color: "var(--text-muted)" }}
+                            <Icon size={15} />
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className="text-xs font-medium truncate"
+                              style={{ color: "var(--text-primary)" }}
+                            >
+                              {habit.name}
+                            </p>
+                            <p
+                              className="flex items-center gap-1 mt-0.5"
+                              style={{ fontSize: 10, color: "var(--text-muted)" }}
+                            >
+                              <Clock size={9} />
+                              {format(fireDate, "h:mm a")}
+                            </p>
+                          </div>
+                          {/* Status badge */}
+                          <span
+                            className="text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0"
+                            style={
+                              isPast
+                                ? {
+                                    background: "var(--glass-bg-subtle)",
+                                    color: "var(--text-muted)",
+                                    border: "1px solid var(--divider)",
+                                  }
+                                : {
+                                    background: "rgba(16,185,129,0.15)",
+                                    color: "#10B981",
+                                    border: "1px solid rgba(16,185,129,0.25)",
+                                  }
+                            }
                           >
-                            <Clock size={9} />
-                            {format(fireDate, "h:mm a")}
-                          </p>
-                        </div>
-                        {/* Status badge */}
-                        <span
-                          className="text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0"
-                          style={
-                            isPast
-                              ? {
-                                  background: "var(--glass-bg-subtle)",
-                                  color: "var(--text-muted)",
-                                  border: "1px solid var(--divider)",
-                                }
-                              : {
-                                  background: "rgba(16,185,129,0.15)",
-                                  color: "#10B981",
-                                  border: "1px solid rgba(16,185,129,0.25)",
-                                }
-                          }
-                        >
-                          {isPast ? "done" : "upcoming"}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
+                            {isPast ? "done" : "upcoming"}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  {/* Program reminders section */}
+                  {programReminders.length > 0 && (
+                    <>
+                      <div
+                        className="flex items-center gap-1.5 px-4 py-2"
+                        style={{ borderTop: "1px solid var(--divider)", background: "var(--glass-bg-subtle)" }}
+                      >
+                        <Compass size={10} style={{ color: "var(--text-muted)" }} />
+                        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                          Plans
+                        </p>
+                      </div>
+                      {programReminders.map((r) => {
+                        const [hh, mm] = r.time.split(":").map(Number);
+                        const fireDate = new Date();
+                        fireDate.setHours(hh, mm, 0, 0);
+                        const isPast = fireDate < new Date();
+                        return (
+                          <div
+                            key={r.enrollment.programId}
+                            className="flex items-center gap-3 px-4 py-2.5"
+                            style={{ opacity: isPast ? 0.5 : 1, borderBottom: "1px solid var(--divider)" }}
+                          >
+                            <span className="text-lg flex-shrink-0">{r.programEmoji}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                                {r.programTitle}
+                              </p>
+                              <p className="flex items-center gap-1 mt-0.5" style={{ fontSize: 10, color: "var(--text-muted)" }}>
+                                <Clock size={9} /> {format(fireDate, "h:mm a")}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => removeProgReminder(r.enrollment.programId)}
+                              className="w-5 h-5 flex items-center justify-center rounded-md flex-shrink-0 transition-colors"
+                              style={{ color: "var(--text-muted)" }}
+                              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
+                              title="Remove reminder"
+                            >
+                              <X size={11} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
+                </div>
               )}
             </div>
           </motion.div>

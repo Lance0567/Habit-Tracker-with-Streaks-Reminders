@@ -1,14 +1,20 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
+import Link from "next/link";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { HabitGrid } from "@/components/habits/HabitGrid";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { useHabits } from "@/hooks/useHabits";
 import { useHabitStore } from "@/store/habitStore";
 import { useLocalTime } from "@/hooks/useLocalTime";
-import { Flame, CheckCircle, Target, TrendingUp } from "lucide-react";
+import { Flame, CheckCircle, Target, TrendingUp, Compass } from "lucide-react";
+import { getUserPrograms } from "@/lib/storage";
+import { PROGRAMS, totalTasks } from "@/lib/programs";
+import type { UserProgram } from "@/types";
+import type { Program } from "@/lib/programs";
 
 // violet(0%) → cyan(50%) → emerald(100%)
 function ringColor(pct: number): string {
@@ -32,10 +38,39 @@ function motivationalCopy(pct: number): string {
   return "All done for today.";
 }
 
+type ActivePlanItem = { program: Program; enrollment: UserProgram; progress: number; activeDay: number };
+
 export default function DashboardPage() {
   const { habits, completedToday, streaks, completionRates, isLoading, toggleLog } = useHabits();
   const { logs } = useHabitStore();
   const { formatted } = useLocalTime();
+
+  const [activePrograms, setActivePrograms] = useState<ActivePlanItem[]>([]);
+  useEffect(() => {
+    getUserPrograms()
+      .then((enrollments) => {
+        const items = enrollments
+          .filter((e) => !e.completedAt)
+          .map((e): ActivePlanItem | null => {
+            const program = PROGRAMS.find((p) => p.id === e.programId);
+            if (!program) return null;
+            const completedSet = new Set(e.completedTasks);
+            const total = totalTasks(program);
+            const progress = total ? Math.min(Math.round((completedSet.size / total) * 100), 100) : 0;
+            let activeDay = program.duration;
+            for (let d = 1; d <= program.duration; d++) {
+              if (!program.days[d - 1].tasks.every((t) => completedSet.has(`${d}:${t.id}`))) {
+                activeDay = d;
+                break;
+              }
+            }
+            return { program, enrollment: e, progress, activeDay };
+          })
+          .filter((x): x is ActivePlanItem => x !== null);
+        setActivePrograms(items);
+      })
+      .catch(() => {});
+  }, []);
 
   const totalHabits = habits.length;
   const completedCount = completedToday.size;
@@ -237,6 +272,66 @@ export default function DashboardPage() {
           </div>
         </GlassCard>
       </motion.div>
+
+      {/* Active Programs */}
+      {activePrograms.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.38, duration: 0.35 }}
+        >
+          <GlassCard className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Compass size={14} style={{ color: "var(--color-accent-light)" }} />
+                <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                  Your Active Plans
+                </p>
+              </div>
+              <Link
+                href="/explore?tab=programs&plans=my"
+                className="text-xs font-medium transition-colors"
+                style={{ color: "var(--color-accent-light)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-primary)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--color-accent-light)"; }}
+              >
+                See all →
+              </Link>
+            </div>
+            <div className="space-y-2.5">
+              {activePrograms.map(({ program, progress, activeDay }) => (
+                <Link
+                  key={program.id}
+                  href={`/explore/programs/${program.id}`}
+                  className="flex items-center gap-3 p-3 rounded-[var(--radius-lg)] transition-all duration-150"
+                  style={{ background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = `${program.color}50`; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--glass-border)"; }}
+                >
+                  <span className="text-xl flex-shrink-0">{program.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>
+                      {program.title}
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                      Day {activeDay} of {program.duration}
+                    </p>
+                    <div className="mt-1.5 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--divider)" }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${progress}%`, background: program.color }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold flex-shrink-0 tabular-nums" style={{ color: program.color }}>
+                    {progress}%
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </GlassCard>
+        </motion.div>
+      )}
 
       {/* Habits */}
       <motion.div

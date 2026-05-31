@@ -4,9 +4,12 @@ import { useEffect, useRef } from "react";
 import { useHabitStore } from "@/store/habitStore";
 import {
   scheduleReminders,
+  scheduleProgramReminders,
   clearAllReminders,
   registerServiceWorker,
 } from "@/lib/notifications";
+import { getUserPrograms } from "@/lib/storage";
+import { PROGRAMS } from "@/lib/programs";
 
 export function useNotifications() {
   const habits = useHabitStore((s) => s.habits);
@@ -29,6 +32,9 @@ export function useNotifications() {
     }
     if (!("Notification" in window) || Notification.permission !== "granted") return;
     scheduleReminders(habits);
+    getUserPrograms()
+      .then((ups) => scheduleProgramReminders(ups, PROGRAMS))
+      .catch(() => {});
     return () => clearAllReminders();
   }, [habits, settings?.notificationsEnabled, isLoading]);
 }

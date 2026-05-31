@@ -23,12 +23,12 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div
         className={clsx(
-          "flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+          "flex-1 flex flex-col h-screen min-w-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
           collapsed ? "md:ml-[72px]" : "md:ml-[240px]"
         )}
       >
         <TopBar />
-        <main className="flex-1 p-4 sm:p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           {children}
           {/* Spacer so content clears the bottom nav on mobile */}
           <div className="h-20 md:hidden" aria-hidden />
