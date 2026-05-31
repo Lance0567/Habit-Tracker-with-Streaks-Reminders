@@ -7,7 +7,7 @@ import type { Habit, HabitLog, Category, AppSettings } from "@/types";
 
 // ── Row mappers (snake_case DB → camelCase TS) ───────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 function rowToCategory(row: any): Category {
   return {
     id:        row.id,
@@ -18,7 +18,7 @@ function rowToCategory(row: any): Category {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 function rowToHabit(row: any): Habit {
   return {
     id:          row.id,
@@ -38,7 +38,7 @@ function rowToHabit(row: any): Habit {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 function rowToLog(row: any): HabitLog {
   return {
     id:             row.id,
@@ -50,7 +50,7 @@ function rowToLog(row: any): HabitLog {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 function rowToSettings(row: any): AppSettings {
   return {
     notificationsEnabled: row.notifications_enabled,
@@ -235,7 +235,6 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
 
 // ── Seed (no-op in cloud — kept for interface compatibility) ──────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 export async function seedIfEmpty(): Promise<void> {}
 
 // ── Data reset ────────────────────────────────────────────────────────────────

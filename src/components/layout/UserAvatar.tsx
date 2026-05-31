@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
@@ -58,12 +59,12 @@ export function UserAvatar() {
         aria-haspopup="true"
       >
         {avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={avatarUrl}
             alt={displayName}
-            className="w-full h-full object-cover"
-            referrerPolicy="no-referrer"
+            width={36}
+            height={36}
+            className="w-full h-full object-cover rounded-full"
           />
         ) : (
           <span
@@ -111,12 +112,12 @@ export function UserAvatar() {
                     style={{ border: "1px solid var(--glass-border-hover)" }}
                   >
                     {avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={avatarUrl}
                         alt={displayName}
-                        className="w-full h-full object-cover"
-                        referrerPolicy="no-referrer"
+                        width={36}
+                        height={36}
+                        className="w-full h-full object-cover rounded-full"
                       />
                     ) : (
                       <span
