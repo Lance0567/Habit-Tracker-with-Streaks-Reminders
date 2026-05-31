@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { BookOpen, Layers, CheckCircle, Clock, ChevronRight, Calendar, Bell, BellOff } from "lucide-react";
 import { PROGRAMS, totalTasks } from "@/lib/programs";
@@ -425,6 +425,7 @@ function ArticleCard({ article }: { article: (typeof ARTICLES)[number] }) {
 
 function ExploreContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialTab: Tab = searchParams.get("tab") === "articles" ? "articles" : "programs";
   const plansParam = searchParams.get("plans");
   const initialSubTab: ProgramSubTab =
@@ -433,6 +434,16 @@ function ExploreContent() {
       : "find";
   const [tab, setTab] = useState<Tab>(initialTab);
   const [subTab, setSubTab] = useState<ProgramSubTab>(initialSubTab);
+
+  function switchTab(next: Tab) {
+    setTab(next);
+    router.replace(`/explore?tab=${next}`, { scroll: false });
+  }
+
+  function switchSubTab(next: ProgramSubTab) {
+    setSubTab(next);
+    router.replace(`/explore?tab=programs&plans=${next}`, { scroll: false });
+  }
   const [categoryFilter, setCategoryFilter] = useState<ArticleCategory | "All">("All");
   const [enrolledMap, setEnrolledMap] = useState<Record<string, UserProgram>>({});
   const [savedIds, setSavedIds] = useState<string[]>([]);
@@ -492,7 +503,7 @@ function ExploreContent() {
           ]).map(({ key, icon, label }) => (
             <button
               key={key}
-              onClick={() => setTab(key)}
+              onClick={() => switchTab(key)}
               className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200"
               style={
                 tab === key
@@ -521,7 +532,7 @@ function ExploreContent() {
                 return (
                   <button
                     key={key}
-                    onClick={() => setSubTab(key)}
+                    onClick={() => switchSubTab(key)}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200"
                     style={
                       subTab === key
@@ -553,7 +564,7 @@ function ExploreContent() {
               <div className="text-center py-12">
                 <p className="text-sm" style={{ color: "var(--text-muted)" }}>{EMPTY_MESSAGE[subTab]}</p>
                 {(subTab === "my" || subTab === "saved") && (
-                  <button onClick={() => setSubTab("find")}
+                  <button onClick={() => switchSubTab("find")}
                     className="mt-3 text-sm font-semibold" style={{ color: "var(--color-accent-light)" }}>
                     Browse Find Plans →
                   </button>
