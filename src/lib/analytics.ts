@@ -1,6 +1,7 @@
 import {
   format,
   subDays,
+  subMonths,
   startOfWeek,
   endOfWeek,
   startOfMonth,
@@ -76,7 +77,7 @@ export function getMonthlyCompletionData(
   const logSet = new Set(logs.map((l) => `${l.habitId}:${l.date}`));
   return Array.from({ length: 6 }, (_, i) => {
     const monthIdx = 5 - i;
-    const d = subDays(new Date(), monthIdx * 30);
+    const d = subMonths(new Date(), monthIdx);
     const monthStart = startOfMonth(d);
     const monthEnd = endOfMonth(d);
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
