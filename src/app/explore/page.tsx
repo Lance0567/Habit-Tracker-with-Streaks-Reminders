@@ -4,13 +4,21 @@ import { Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { BookOpen, Layers, CheckCircle, Clock, ChevronRight } from "lucide-react";
+import { BookOpen, Layers, CheckCircle, Clock, ChevronRight, Calendar } from "lucide-react";
 import { PROGRAMS, totalTasks } from "@/lib/programs";
 import { ARTICLES, type ArticleCategory } from "@/lib/articles";
-import { getUserPrograms } from "@/lib/storage";
+import { getUserPrograms, getSavedPrograms } from "@/lib/storage";
 import type { UserProgram } from "@/types";
 
 type Tab = "programs" | "articles";
+type ProgramSubTab = "my" | "find" | "saved" | "completed";
+
+const SUB_TABS: { key: ProgramSubTab; label: string }[] = [
+  { key: "my",        label: "My Plans" },
+  { key: "find",      label: "Find Plans" },
+  { key: "saved",     label: "Saved" },
+  { key: "completed", label: "Completed" },
+];
 
 const CATEGORIES: ArticleCategory[] = ["Science", "Strategy", "Mindset", "Productivity", "Health"];
 
@@ -71,9 +79,9 @@ function ProgramCard({
         <div className="relative">
           <div className="flex items-center gap-3 flex-wrap mb-3">
             <span className="text-3xl">{program.emoji}</span>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+            <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full"
               style={{ background: `${program.color}18`, color: program.color, border: `1px solid ${program.color}30` }}>
-              {program.duration} days
+              <Calendar size={11} /> {program.duration} days
             </span>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
               style={{ background: `${diffColor}18`, color: diffColor, border: `1px solid ${diffColor}30` }}>
@@ -123,9 +131,9 @@ function ProgramCard({
       <div className="flex items-start justify-between mb-3">
         <span className="text-2xl">{program.emoji}</span>
         <div className="flex flex-col items-end gap-1.5">
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+          <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
             style={{ background: `${program.color}18`, color: program.color, border: `1px solid ${program.color}30` }}>
-            {program.duration}d
+            <Calendar size={10} /> {program.duration} days
           </span>
           <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
             style={{ background: `${diffColor}18`, color: diffColor, border: `1px solid ${diffColor}30` }}>
@@ -207,8 +215,10 @@ function ExploreContent() {
   const searchParams = useSearchParams();
   const initialTab: Tab = searchParams.get("tab") === "articles" ? "articles" : "programs";
   const [tab, setTab] = useState<Tab>(initialTab);
+  const [subTab, setSubTab] = useState<ProgramSubTab>("find");
   const [categoryFilter, setCategoryFilter] = useState<ArticleCategory | "All">("All");
   const [enrolledMap, setEnrolledMap] = useState<Record<string, UserProgram>>({});
+  const [savedIds, setSavedIds] = useState<string[]>([]);
 
   useEffect(() => {
     getUserPrograms()
@@ -218,13 +228,30 @@ function ExploreContent() {
         setEnrolledMap(map);
       })
       .catch(() => {});
+    getSavedPrograms().then(setSavedIds).catch(() => {});
   }, []);
 
   const featuredProgram = PROGRAMS.find((p) => p.featured);
-  const otherPrograms   = PROGRAMS.filter((p) => !p.featured);
   const filteredArticles = categoryFilter === "All"
     ? ARTICLES
     : ARTICLES.filter((a) => a.category === categoryFilter);
+
+  // Programs shown for the active sub-tab
+  const subTabPrograms = PROGRAMS.filter((p) => {
+    const e = enrolledMap[p.id];
+    if (subTab === "my")        return !!e && !e.completedAt;
+    if (subTab === "completed") return !!e?.completedAt;
+    if (subTab === "saved")     return savedIds.includes(p.id);
+    return true; // find → full catalog
+  });
+  const findGridPrograms = subTab === "find" ? subTabPrograms.filter((p) => !p.featured) : subTabPrograms;
+
+  const EMPTY_MESSAGE: Record<ProgramSubTab, string> = {
+    my:        "You haven't started any plans yet — browse Find Plans to begin.",
+    find:      "No plans available.",
+    saved:     "No saved plans yet — open a plan and tap the bookmark to save it.",
+    completed: "No completed plans yet — finishing a plan will list it here.",
+  };
 
   return (
     <div className="space-y-6">
@@ -266,16 +293,56 @@ function ExploreContent() {
       <AnimatePresence mode="wait">
         {tab === "programs" ? (
           <motion.div key="programs" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.2 }} className="space-y-5">
-            {featuredProgram && (
+            {/* Sub-tabs */}
+            <div className="flex gap-2 flex-wrap">
+              {SUB_TABS.map(({ key, label }) => {
+                const count =
+                  key === "my"        ? PROGRAMS.filter((p) => enrolledMap[p.id] && !enrolledMap[p.id]?.completedAt).length
+                  : key === "completed" ? PROGRAMS.filter((p) => enrolledMap[p.id]?.completedAt).length
+                  : key === "saved"     ? savedIds.length
+                  : PROGRAMS.length;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setSubTab(key)}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200"
+                    style={
+                      subTab === key
+                        ? { background: "var(--color-accent)", color: "#fff" }
+                        : { background: "var(--glass-bg-default)", border: "1px solid var(--glass-border)", color: "var(--text-muted)" }
+                    }
+                  >
+                    {label}
+                    <span className="text-[10px] font-bold opacity-70">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Featured only on Find Plans */}
+            {subTab === "find" && featuredProgram && (
               <ProgramCard program={featuredProgram} enrollment={enrolledMap[featuredProgram.id]} featured />
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {otherPrograms.map((program, i) => (
-                <motion.div key={program.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.06 }}>
-                  <ProgramCard program={program} enrollment={enrolledMap[program.id]} />
-                </motion.div>
-              ))}
-            </div>
+
+            {findGridPrograms.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {findGridPrograms.map((program, i) => (
+                  <motion.div key={program.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 + i * 0.06 }}>
+                    <ProgramCard program={program} enrollment={enrolledMap[program.id]} />
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>{EMPTY_MESSAGE[subTab]}</p>
+                {(subTab === "my" || subTab === "saved") && (
+                  <button onClick={() => setSubTab("find")}
+                    className="mt-3 text-sm font-semibold" style={{ color: "var(--color-accent-light)" }}>
+                    Browse Find Plans →
+                  </button>
+                )}
+              </div>
+            )}
           </motion.div>
         ) : (
           <motion.div key="articles" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }} className="space-y-5">

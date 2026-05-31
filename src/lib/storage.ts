@@ -267,6 +267,38 @@ export async function getUserProgram(programId: string): Promise<UserProgram | n
   return data ? rowToUserProgram(data) : null;
 }
 
+// ── Saved programs (bookmarks) ────────────────────────────────────────────────
+
+export async function getSavedPrograms(): Promise<string[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase.from("saved_programs").select("program_id");
+    if (error) throw error;
+    return (data ?? []).map((r) => r.program_id as string);
+  } catch {
+    // Table may not exist yet — fail soft so the UI still works.
+    return [];
+  }
+}
+
+export async function saveProgram(programId: string): Promise<void> {
+  const userId = await getUserId();
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("saved_programs")
+    .upsert({ user_id: userId, program_id: programId });
+  if (error) throw error;
+}
+
+export async function unsaveProgram(programId: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("saved_programs")
+    .delete()
+    .eq("program_id", programId);
+  if (error) throw error;
+}
+
 export async function enrollProgram(programId: string): Promise<UserProgram> {
   const userId = await getUserId();
   const supabase = createClient();

@@ -4,13 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Check, Lock, Play, Trophy, RotateCcw, ChevronDown } from "lucide-react";
+import { addDays, format, startOfDay, isBefore } from "date-fns";
+import { ArrowLeft, Check, Lock, Play, Trophy, RotateCcw, ChevronDown, Calendar, Bookmark, AlertTriangle } from "lucide-react";
 import { PROGRAMS, totalTasks } from "@/lib/programs";
 import {
   getUserProgram,
   enrollProgram,
   updateProgramProgress,
   unenrollProgram,
+  getSavedPrograms,
+  saveProgram,
+  unsaveProgram,
 } from "@/lib/storage";
 import { Spinner } from "@/components/ui/Spinner";
 import type { UserProgram } from "@/types";
@@ -30,6 +34,7 @@ export default function ProgramDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState(1);
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
   const prevActive = useRef(1);
 
   useEffect(() => {
@@ -38,8 +43,21 @@ export default function ProgramDetailPage() {
       .then((e) => setEnrollment(e))
       .catch(() => {})
       .finally(() => setLoading(false));
+    getSavedPrograms().then((ids) => setSaved(ids.includes(program.id))).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [program?.id]);
+
+  async function toggleSaved() {
+    if (!program) return;
+    const next = !saved;
+    setSaved(next);
+    try {
+      if (next) await saveProgram(program.id);
+      else await unsaveProgram(program.id);
+    } catch {
+      setSaved(!next); // revert on failure
+    }
+  }
 
   // ── Derived progress ──────────────────────────────────────────────────────
   const completedSet = new Set(enrollment?.completedTasks ?? []);
@@ -57,6 +75,18 @@ export default function ProgramDetailPage() {
   const doneCount = enrollment?.completedTasks.length ?? 0;
   const total = program ? totalTasks(program) : 0;
   const progress = total ? Math.min(Math.round((doneCount / total) * 100), 100) : 0;
+
+  // Scheduled date for a given day (day 1 = start date)
+  const scheduledDate = (d: number) =>
+    enrollment ? addDays(new Date(enrollment.startedAt), d - 1) : null;
+
+  // Days whose scheduled date has passed but aren't completed = behind schedule
+  const missed = (enrollment && program && !allDone)
+    ? program.days.filter((d) => {
+        const sd = scheduledDate(d.day);
+        return sd != null && !isDayDone(d.day) && isBefore(startOfDay(sd), startOfDay(new Date()));
+      }).length
+    : 0;
 
   // Align selected day with active day on first load
   useEffect(() => {
@@ -152,11 +182,26 @@ export default function ProgramDetailPage() {
         className="relative overflow-hidden rounded-3xl px-6 py-6"
         style={{ background: `linear-gradient(135deg, ${program.color}26 0%, ${program.color}0A 70%, var(--glass-bg-subtle) 100%)`, border: `1px solid ${program.color}26` }}
       >
-        <div className="flex items-center gap-3 mb-3 flex-wrap">
+        {/* Bookmark toggle */}
+        <button
+          onClick={toggleSaved}
+          className="absolute top-5 right-5 w-9 h-9 rounded-xl flex items-center justify-center transition-all z-10"
+          style={
+            saved
+              ? { background: `${program.color}1A`, border: `1px solid ${program.color}40`, color: program.color }
+              : { background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)", color: "var(--text-muted)" }
+          }
+          aria-label={saved ? "Remove from saved" : "Save plan"}
+          title={saved ? "Saved" : "Save for later"}
+        >
+          <Bookmark size={16} fill={saved ? program.color : "none"} />
+        </button>
+
+        <div className="flex items-center gap-3 mb-3 flex-wrap pr-12">
           <span className="text-3xl">{program.emoji}</span>
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+          <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full"
             style={{ background: `${program.color}18`, color: program.color, border: `1px solid ${program.color}30` }}>
-            {program.duration} days
+            <Calendar size={11} /> {program.duration} days
           </span>
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
             style={{ background: `${diffColor}18`, color: diffColor, border: `1px solid ${diffColor}30` }}>
@@ -247,33 +292,65 @@ export default function ProgramDetailPage() {
             </div>
           )}
 
+          {/* Missed-days counter (only when behind schedule) */}
+          {missed > 0 && (
+            <div className="rounded-2xl p-3" style={{ background: "rgba(244,63,94,0.06)" }}>
+              <div
+                className="flex items-center gap-2.5 rounded-xl px-4 py-3"
+                style={{ border: "3px solid #F43F5E", background: "var(--glass-bg-subtle)" }}
+              >
+                <AlertTriangle size={18} style={{ color: "#F43F5E", flexShrink: 0 }} />
+                <div>
+                  <p className="text-sm font-bold" style={{ color: "#F43F5E" }}>
+                    {missed} day{missed > 1 ? "s" : ""} behind schedule
+                  </p>
+                  <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                    Catch up on missed days to get back on track.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Day selector */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>Days</p>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5" style={{ color: "var(--text-muted)" }}>
+              <Calendar size={12} /> Days
+            </p>
             <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: "thin" }}>
               {program.days.map((d) => {
                 const done = isDayDone(d.day);
                 const locked = d.day > activeDay;
                 const selected = d.day === selectedDay;
+                const sd = scheduledDate(d.day);
+                const isMissed = sd != null && !done && isBefore(startOfDay(sd), startOfDay(new Date()));
                 return (
-                  <button
-                    key={d.day}
-                    disabled={locked}
-                    onClick={() => { setSelectedDay(d.day); setExpandedTask(null); }}
-                    className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all"
-                    style={
-                      done
-                        ? { background: program.color, color: "#fff", outline: selected ? `2px solid ${program.color}` : "none", outlineOffset: 2 }
-                        : selected
-                        ? { background: `${program.color}1A`, color: program.color, border: `1.5px solid ${program.color}` }
-                        : locked
-                        ? { background: "var(--glass-bg-subtle)", color: "var(--text-muted)", opacity: 0.5, cursor: "not-allowed" }
-                        : { background: "var(--glass-bg-default)", color: "var(--text-secondary)", border: "1px solid var(--glass-border)" }
-                    }
-                    aria-label={`Day ${d.day}${locked ? " (locked)" : done ? " (completed)" : ""}`}
-                  >
-                    {done ? <Check size={15} /> : locked ? <Lock size={12} /> : d.day}
-                  </button>
+                  <div key={d.day} className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <button
+                      disabled={locked}
+                      onClick={() => { setSelectedDay(d.day); setExpandedTask(null); }}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all"
+                      style={
+                        done
+                          ? { background: program.color, color: "#fff", outline: selected ? `2px solid ${program.color}` : "none", outlineOffset: 2 }
+                          : selected
+                          ? { background: `${program.color}1A`, color: program.color, border: `1.5px solid ${program.color}` }
+                          : isMissed
+                          ? { background: "rgba(244,63,94,0.10)", color: "#F43F5E", border: "1.5px solid rgba(244,63,94,0.45)" }
+                          : locked
+                          ? { background: "var(--glass-bg-subtle)", color: "var(--text-muted)", opacity: 0.5, cursor: "not-allowed" }
+                          : { background: "var(--glass-bg-default)", color: "var(--text-secondary)", border: "1px solid var(--glass-border)" }
+                      }
+                      aria-label={`Day ${d.day}${locked ? " (locked)" : done ? " (completed)" : ""}`}
+                    >
+                      {done ? <Check size={15} /> : locked ? <Lock size={12} /> : d.day}
+                    </button>
+                    {sd && (
+                      <span className="text-[9px] font-medium whitespace-nowrap" style={{ color: isMissed ? "#F43F5E" : "var(--text-muted)" }}>
+                        {format(sd, "MMM d")}
+                      </span>
+                    )}
+                  </div>
                 );
               })}
             </div>
