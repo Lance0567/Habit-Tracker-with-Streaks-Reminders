@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { TrendingUp } from "lucide-react";
 import {
   AreaChart,
   Area,
@@ -13,21 +14,14 @@ import {
 } from "recharts";
 
 const TOOLTIP_STYLE: React.CSSProperties = {
-  background: "var(--glass-bg-elevated)",
-  backdropFilter: "blur(12px)",
-  WebkitBackdropFilter: "blur(12px)",
-  border: "1px solid var(--glass-border)",
+  background: "var(--popup-bg)",
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)",
+  border: "1px solid var(--popup-border)",
   borderRadius: 10,
   padding: "8px 12px",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
 };
-
-const FALLBACK = [
-  { week: "W1", rate: 72 }, { week: "W2", rate: 85 }, { week: "W3", rate: 68 },
-  { week: "W4", rate: 91 }, { week: "W5", rate: 78 }, { week: "W6", rate: 88 },
-  { week: "W7", rate: 75 }, { week: "W8", rate: 93 }, { week: "W9", rate: 82 },
-  { week: "W10", rate: 87 }, { week: "W11", rate: 90 }, { week: "W12", rate: 95 },
-];
 
 function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null;
@@ -44,10 +38,19 @@ interface Props {
 }
 
 export function CompletionRateChart({ data }: Props) {
-  const chartData = data && data.length > 0 ? data : FALLBACK;
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-[200px] flex flex-col items-center justify-center gap-2">
+        <TrendingUp size={28} style={{ color: "var(--text-muted)", opacity: 0.35 }} />
+        <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>No data yet</p>
+        <p className="text-xs" style={{ color: "var(--text-muted)", opacity: 0.6 }}>Complete habits to see your weekly rate</p>
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={200}>
-      <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+      <AreaChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
         <defs>
           <linearGradient id="rateGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="var(--color-accent)" stopOpacity={0.4} />

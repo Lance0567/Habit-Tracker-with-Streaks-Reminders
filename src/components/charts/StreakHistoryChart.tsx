@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { BarChart2 } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -14,20 +15,14 @@ import {
 } from "recharts";
 
 const TOOLTIP_STYLE: React.CSSProperties = {
-  background: "var(--glass-bg-elevated)",
-  backdropFilter: "blur(12px)",
-  WebkitBackdropFilter: "blur(12px)",
-  border: "1px solid var(--glass-border)",
+  background: "var(--popup-bg)",
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)",
+  border: "1px solid var(--popup-border)",
   borderRadius: 10,
   padding: "8px 12px",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
 };
-
-const FALLBACK = [
-  { name: "Jan", streak: 14 }, { name: "Feb", streak: 21 },
-  { name: "Mar", streak: 7 },  { name: "Apr", streak: 31 },
-  { name: "May", streak: 18 }, { name: "Jun", streak: 45 },
-];
 
 function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null;
@@ -44,17 +39,26 @@ interface Props {
 }
 
 export function StreakHistoryChart({ data }: Props) {
-  const chartData = data && data.length > 0 ? data : FALLBACK;
-  const maxVal = Math.max(...chartData.map((d) => d.streak));
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-[200px] flex flex-col items-center justify-center gap-2">
+        <BarChart2 size={28} style={{ color: "var(--text-muted)", opacity: 0.35 }} />
+        <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>No data yet</p>
+        <p className="text-xs" style={{ color: "var(--text-muted)", opacity: 0.6 }}>Complete habits to see monthly totals</p>
+      </div>
+    );
+  }
+
+  const maxVal = Math.max(...data.map((d) => d.streak));
   return (
     <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--divider)" vertical={false} />
         <XAxis dataKey="name" tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
         <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
         <Tooltip content={<CustomTooltip />} />
         <Bar dataKey="streak" radius={[4, 4, 0, 0]}>
-          {chartData.map((entry, i) => (
+          {data.map((entry, i) => (
             <Cell
               key={`cell-${i}`}
               fill={entry.streak === maxVal ? "#F59E0B" : "var(--color-accent)"}

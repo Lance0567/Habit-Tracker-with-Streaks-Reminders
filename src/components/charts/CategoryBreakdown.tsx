@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { Target } from "lucide-react";
 import {
   RadarChart,
   Radar,
@@ -12,21 +13,14 @@ import {
 } from "recharts";
 
 const TOOLTIP_STYLE: React.CSSProperties = {
-  background: "var(--glass-bg-elevated)",
-  backdropFilter: "blur(12px)",
-  WebkitBackdropFilter: "blur(12px)",
-  border: "1px solid var(--glass-border)",
+  background: "var(--popup-bg)",
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)",
+  border: "1px solid var(--popup-border)",
   borderRadius: 10,
   padding: "8px 12px",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
 };
-
-const FALLBACK = [
-  { category: "Health", value: 82 },
-  { category: "Work", value: 75 },
-  { category: "Mindfulness", value: 91 },
-  { category: "Fitness", value: 68 },
-];
 
 function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null;
@@ -43,10 +37,19 @@ interface Props {
 }
 
 export function CategoryBreakdown({ data }: Props) {
-  const chartData = data && data.length > 0 ? data : FALLBACK;
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-[220px] flex flex-col items-center justify-center gap-2">
+        <Target size={28} style={{ color: "var(--text-muted)", opacity: 0.35 }} />
+        <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>No categories yet</p>
+        <p className="text-xs" style={{ color: "var(--text-muted)", opacity: 0.6 }}>Add habits with categories to see breakdown</p>
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <RadarChart data={chartData} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+      <RadarChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
         <PolarGrid stroke="var(--divider)" />
         <PolarAngleAxis
           dataKey="category"
