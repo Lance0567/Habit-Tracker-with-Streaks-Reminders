@@ -3,7 +3,7 @@
 // so habitStore.ts requires minimal changes.
 
 import { createClient } from "@/lib/supabase";
-import type { Habit, HabitLog, Category, AppSettings } from "@/types";
+import type { Habit, HabitLog, Category, AppSettings, UserProgram } from "@/types";
 
 // ── Row mappers (snake_case DB → camelCase TS) ───────────────────────────────
 
@@ -230,6 +230,67 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
     theme:                 settings.theme ?? null,
     created_at:            settings.createdAt,
   });
+  if (error) throw error;
+}
+
+// ── User Programs ─────────────────────────────────────────────────────────────
+
+function rowToUserProgram(row: any): UserProgram {
+  return {
+    id:          row.id,
+    programId:   row.program_id,
+    startedAt:   row.started_at,
+    currentDay:  row.current_day,
+    completedAt: row.completed_at ?? null,
+  };
+}
+
+export async function getUserPrograms(): Promise<UserProgram[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_programs")
+    .select("*")
+    .order("started_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(rowToUserProgram);
+}
+
+export async function enrollProgram(programId: string): Promise<UserProgram> {
+  const userId = await getUserId();
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_programs")
+    .insert({ user_id: userId, program_id: programId, current_day: 1 })
+    .select()
+    .single();
+  if (error) throw error;
+  return rowToUserProgram(data);
+}
+
+export async function updateProgramDay(programId: string, day: number): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("user_programs")
+    .update({ current_day: day })
+    .eq("program_id", programId);
+  if (error) throw error;
+}
+
+export async function completeProgram(programId: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("user_programs")
+    .update({ completed_at: new Date().toISOString() })
+    .eq("program_id", programId);
+  if (error) throw error;
+}
+
+export async function unenrollProgram(programId: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("user_programs")
+    .delete()
+    .eq("program_id", programId);
   if (error) throw error;
 }
 

@@ -49,6 +49,7 @@ function LayoutShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/habits") ||
     pathname.startsWith("/analytics") ||
+    pathname.startsWith("/explore") ||
     pathname.startsWith("/categories") ||
     pathname.startsWith("/settings");
 
