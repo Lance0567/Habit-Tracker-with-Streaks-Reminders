@@ -194,28 +194,27 @@ export default function LandingPage() {
           </span>
         </motion.div>
 
-        <motion.button
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          onClick={handleSignIn}
-          disabled={loading}
-          className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200 disabled:opacity-50"
-          style={{
-            background: "var(--glass-bg-default)",
-            border: "1px solid var(--glass-border-hover)",
-            color: "var(--text-secondary)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "var(--text-primary)";
-            e.currentTarget.style.borderColor = "var(--color-accent-light)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "var(--text-secondary)";
-            e.currentTarget.style.borderColor = "var(--glass-border-hover)";
-          }}
-        >
-          Sign in <ArrowRight size={13} />
-        </motion.button>
+        <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}>
+          <Link
+            href="/auth"
+            className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200"
+            style={{
+              background: "var(--glass-bg-default)",
+              border: "1px solid var(--glass-border-hover)",
+              color: "var(--text-secondary)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-primary)";
+              (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--color-accent-light)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-secondary)";
+              (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--glass-border-hover)";
+            }}
+          >
+            Sign in <ArrowRight size={13} />
+          </Link>
+        </motion.div>
       </nav>
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
