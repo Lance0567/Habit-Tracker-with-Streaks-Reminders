@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
-import { Zap, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Zap, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase";
@@ -19,56 +19,71 @@ function GoogleIcon() {
 }
 
 function InputField({
-  id, label, type, value, onChange, placeholder, icon, rightSlot,
+  id, label, type, value, onChange, rightSlot,
 }: {
   id: string;
   label: string;
   type: string;
   value: string;
   onChange: (v: string) => void;
-  placeholder?: string;
-  icon: React.ReactNode;
   rightSlot?: React.ReactNode;
 }) {
+  const [focused, setFocused] = useState(false);
+  const floated = focused || value.length > 0;
+
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="text-xs font-semibold uppercase tracking-[0.15em]"
-        style={{ color: "var(--text-muted)" }}>
+    <div className="relative" style={{ paddingTop: 10 }}>
+      <label
+        htmlFor={id}
+        style={{
+          position: "absolute",
+          left: 14,
+          top: floated ? 0 : "calc(50% + 5px)",
+          transform: floated ? "translateY(-50%) scale(0.8)" : "translateY(-50%)",
+          transformOrigin: "left center",
+          transition: "all 0.18s ease",
+          color: focused ? "var(--color-accent)" : "var(--text-muted)",
+          fontSize: 13,
+          fontWeight: 500,
+          pointerEvents: "none",
+          zIndex: 1,
+          background: floated ? "var(--glass-bg-default)" : "transparent",
+          padding: floated ? "0 4px" : "0",
+          lineHeight: 1,
+        }}
+      >
         {label}
       </label>
-      <div className="relative">
-        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ color: "var(--text-muted)" }}>
-          {icon}
+
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder=""
+        autoComplete={type === "password" ? "current-password" : "email"}
+        required
+        className="w-full px-4 py-3.5 rounded-xl text-sm outline-none transition-all duration-200"
+        style={{
+          background: "var(--glass-bg-subtle)",
+          border: `1.5px solid ${focused ? "var(--color-accent)" : "var(--glass-border)"}`,
+          boxShadow: focused ? "0 0 0 3px var(--color-accent-glow)" : "none",
+          color: "var(--text-primary)",
+          paddingRight: rightSlot ? "2.75rem" : "1rem",
+        }}
+      />
+
+      {rightSlot && (
+        <span className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ paddingTop: 10 }}>
+          {rightSlot}
         </span>
-        <input
-          id={id}
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          autoComplete={type === "password" ? "current-password" : "email"}
-          required
-          className="w-full pl-10 pr-10 py-3 rounded-[var(--radius-md)] text-sm transition-all duration-200 outline-none"
-          style={{
-            background: "var(--glass-bg-subtle)",
-            border: "1px solid var(--glass-border)",
-            color: "var(--text-primary)",
-          }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--color-accent)"; e.currentTarget.style.boxShadow = "var(--glow-sm)"; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.boxShadow = "none"; }}
-        />
-        {rightSlot && (
-          <span className="absolute right-3.5 top-1/2 -translate-y-1/2">
-            {rightSlot}
-          </span>
-        )}
-      </div>
+      )}
     </div>
   );
 }
 
-// Inner component — useSearchParams requires a Suspense boundary in Next.js 14
 function SignInContent() {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
@@ -79,7 +94,6 @@ function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Show errors forwarded from the OAuth callback
   useEffect(() => {
     const urlError = searchParams.get("error");
     if (urlError) setError(decodeURIComponent(urlError));
@@ -121,6 +135,17 @@ function SignInContent() {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="w-full max-w-sm"
       >
+        {/* Back to home */}
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs font-medium mb-6 transition-colors"
+          style={{ color: "var(--text-muted)" }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-primary)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-muted)"; }}
+        >
+          <ArrowLeft size={13} /> Home
+        </Link>
+
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-8">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
@@ -151,18 +176,34 @@ function SignInContent() {
           )}
 
           <form onSubmit={handleEmailSignIn} className="space-y-4">
-            <InputField id="email" label="Email" type="email" value={email} onChange={setEmail}
-              placeholder="you@example.com" icon={<Mail size={15} />} />
+            <InputField id="email" label="Email" type="email" value={email} onChange={setEmail} />
 
-            <InputField id="password" label="Password" type={showPw ? "text" : "password"}
-              value={password} onChange={setPassword} placeholder="••••••••" icon={<Lock size={15} />}
-              rightSlot={
-                <button type="button" onClick={() => setShowPw((v) => !v)} className="focus:outline-none"
-                  style={{ color: "var(--text-muted)" }} aria-label={showPw ? "Hide password" : "Show password"}>
-                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              }
-            />
+            <div className="space-y-1">
+              <InputField
+                id="password"
+                label="Password"
+                type={showPw ? "text" : "password"}
+                value={password}
+                onChange={setPassword}
+                rightSlot={
+                  <button type="button" onClick={() => setShowPw((v) => !v)} className="focus:outline-none"
+                    style={{ color: "var(--text-muted)" }} aria-label={showPw ? "Hide password" : "Show password"}>
+                    {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                }
+              />
+              <div className="flex justify-end pt-0.5">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-xs font-medium transition-colors"
+                  style={{ color: "var(--color-accent-light)" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "underline"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none"; }}
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
 
             <button type="submit" disabled={loading || !email || !password}
               className="w-full py-3 rounded-[var(--radius-md)] text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-white"
@@ -203,7 +244,6 @@ function SignInContent() {
   );
 }
 
-// Suspense wrapper required by Next.js 14 when useSearchParams is used in a page
 export default function SignInPage() {
   return (
     <Suspense>

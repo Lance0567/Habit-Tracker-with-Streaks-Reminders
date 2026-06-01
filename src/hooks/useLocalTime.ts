@@ -2,18 +2,17 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 
 export function useLocalTime() {
-  const [tick, setTick] = useState(0);
+  const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
-    const timer = setInterval(() => setTick((t) => t + 1), 60_000);
+    setNow(new Date());
+    const timer = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(timer);
   }, []);
 
-  void tick;
-  const now = new Date();
   return {
-    time: format(now, "HH:mm"),
-    date: format(now, "yyyy-MM-dd"),
-    formatted: format(now, "EEEE, MMMM d · yyyy"),
+    time:      now ? format(now, "HH:mm") : "",
+    date:      now ? format(now, "yyyy-MM-dd") : "",
+    formatted: now ? format(now, "EEEE, MMMM d · yyyy") : "",
   };
 }

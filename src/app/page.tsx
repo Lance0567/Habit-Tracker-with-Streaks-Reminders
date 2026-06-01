@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Zap,
@@ -158,6 +158,13 @@ function MockHabitCard({
 
 export default function LandingPage() {
   const [loading, setLoading] = useState(false);
+  const [heatCells, setHeatCells] = useState<Array<{ filled: boolean; opacity: number }>>([]);
+  useEffect(() => {
+    setHeatCells(Array.from({ length: 21 }, () => ({
+      filled: Math.random() > 0.25,
+      opacity: 0.3 + Math.random() * 0.5,
+    })));
+  }, []);
 
   async function handleSignIn() {
     setLoading(true);
@@ -399,21 +406,18 @@ export default function LandingPage() {
                   Last 21 days
                 </p>
                 <div className="flex gap-1">
-                  {Array.from({ length: 21 }).map((_, i) => {
-                    const filled = Math.random() > 0.25;
-                    return (
-                      <div
-                        key={i}
-                        className="flex-1 rounded-sm"
-                        style={{
-                          height: 8,
-                          background: filled
-                            ? `rgba(124,58,237,${0.3 + Math.random() * 0.5})`
-                            : "var(--glass-bg-subtle)",
-                        }}
-                      />
-                    );
-                  })}
+                  {heatCells.map((cell, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 rounded-sm"
+                      style={{
+                        height: 8,
+                        background: cell.filled
+                          ? `rgba(124,58,237,${cell.opacity})`
+                          : "var(--glass-bg-subtle)",
+                      }}
+                    />
+                  ))}
                 </div>
               </div>
             </div>

@@ -1,7 +1,13 @@
 import "./globals.css";
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import { AppShell } from "@/components/layout/AppShell";
+
+export const metadata: Metadata = {
+  title: "HabitFlow",
+  description: "Build habits that stick.",
+};
 
 const inter = Inter({
   subsets: ["latin"],

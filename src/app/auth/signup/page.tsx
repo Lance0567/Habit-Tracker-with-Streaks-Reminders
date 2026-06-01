@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Mail, Lock, Eye, EyeOff, User, MailCheck } from "lucide-react";
+import { Zap, Eye, EyeOff, MailCheck, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
@@ -19,46 +19,69 @@ function GoogleIcon() {
 }
 
 function InputField({
-  id, label, type, value, onChange, placeholder, icon, rightSlot, autoComplete,
+  id, label, type, value, onChange, rightSlot, autoComplete, required = true,
 }: {
   id: string;
   label: string;
   type: string;
   value: string;
   onChange: (v: string) => void;
-  placeholder?: string;
-  icon: React.ReactNode;
   rightSlot?: React.ReactNode;
   autoComplete?: string;
+  required?: boolean;
 }) {
+  const [focused, setFocused] = useState(false);
+  const floated = focused || value.length > 0;
+
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="text-xs font-semibold uppercase tracking-[0.15em]"
-        style={{ color: "var(--text-muted)" }}>
+    <div className="relative" style={{ paddingTop: 10 }}>
+      <label
+        htmlFor={id}
+        style={{
+          position: "absolute",
+          left: 14,
+          top: floated ? 0 : "calc(50% + 5px)",
+          transform: floated ? "translateY(-50%) scale(0.8)" : "translateY(-50%)",
+          transformOrigin: "left center",
+          transition: "all 0.18s ease",
+          color: focused ? "var(--color-accent)" : "var(--text-muted)",
+          fontSize: 13,
+          fontWeight: 500,
+          pointerEvents: "none",
+          zIndex: 1,
+          background: floated ? "var(--glass-bg-default)" : "transparent",
+          padding: floated ? "0 4px" : "0",
+          lineHeight: 1,
+        }}
+      >
         {label}
       </label>
-      <div className="relative">
-        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ color: "var(--text-muted)" }}>
-          {icon}
+
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder=""
+        autoComplete={autoComplete}
+        required={required}
+        className="w-full px-4 py-3.5 rounded-xl text-sm outline-none transition-all duration-200"
+        style={{
+          background: "var(--glass-bg-subtle)",
+          border: `1.5px solid ${focused ? "var(--color-accent)" : "var(--glass-border)"}`,
+          boxShadow: focused ? "0 0 0 3px var(--color-accent-glow)" : "none",
+          color: "var(--text-primary)",
+          paddingRight: rightSlot ? "2.75rem" : "1rem",
+        }}
+      />
+
+      {rightSlot && (
+        <span className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ paddingTop: 10 }}>
+          {rightSlot}
         </span>
-        <input
-          id={id}
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          autoComplete={autoComplete}
-          required={id !== "name"}
-          className="w-full pl-10 pr-10 py-3 rounded-[var(--radius-md)] text-sm transition-all duration-200 outline-none"
-          style={{ background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)", color: "var(--text-primary)" }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--color-accent)"; e.currentTarget.style.boxShadow = "var(--glow-sm)"; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.boxShadow = "none"; }}
-        />
-        {rightSlot && (
-          <span className="absolute right-3.5 top-1/2 -translate-y-1/2">{rightSlot}</span>
-        )}
-      </div>
+      )}
     </div>
   );
 }
@@ -105,11 +128,9 @@ export default function SignUpPage() {
         : error.message);
       setLoading(false);
     } else if (data.session) {
-      // Email confirmation disabled — signed in immediately
       router.push("/dashboard");
       router.refresh();
     } else {
-      // Confirmation email sent
       setEmailSent(true);
     }
   }
@@ -130,8 +151,6 @@ export default function SignUpPage() {
     await supabase.auth.resend({ type: "signup", email });
   }
 
-  // ── Email confirmation sent state ──────────────────────────────────────────
-
   if (emailSent) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
@@ -143,37 +162,26 @@ export default function SignUpPage() {
         >
           <div className="rounded-[var(--radius-lg)] p-8 space-y-5"
             style={{ background: "var(--glass-bg-default)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid var(--glass-border)" }}>
-
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto"
               style={{ background: "rgba(16,185,129,0.14)", border: "1px solid rgba(16,185,129,0.30)" }}>
               <MailCheck size={28} style={{ color: "#10B981" }} />
             </div>
-
             <div>
               <h2 className="text-lg font-bold mb-1" style={{ color: "var(--text-primary)" }}>Check your email</h2>
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                We sent a confirmation link to
-              </p>
-              <p className="text-sm font-semibold mt-0.5" style={{ color: "var(--color-accent-light)" }}>
-                {email}
-              </p>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>We sent a confirmation link to</p>
+              <p className="text-sm font-semibold mt-0.5" style={{ color: "var(--color-accent-light)" }}>{email}</p>
               <p className="text-xs mt-3" style={{ color: "var(--text-muted)" }}>
-                Click the link in that email to activate your account.
-                Check your spam folder if you don&apos;t see it.
+                Click the link in that email to activate your account. Check your spam folder if you don&apos;t see it.
               </p>
             </div>
-
-            <button onClick={handleResend}
-              className="text-xs font-medium transition-colors"
+            <button onClick={handleResend} className="text-xs font-medium transition-colors"
               style={{ color: "var(--text-muted)" }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--color-accent-light)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)"; }}>
               Didn&apos;t get it? Resend email
             </button>
-
             <div className="pt-1">
-              <Link href="/auth" className="text-xs font-semibold"
-                style={{ color: "var(--color-accent-light)" }}>
+              <Link href="/auth" className="text-xs font-semibold" style={{ color: "var(--color-accent-light)" }}>
                 ← Back to sign in
               </Link>
             </div>
@@ -183,8 +191,6 @@ export default function SignUpPage() {
     );
   }
 
-  // ── Sign-up form ───────────────────────────────────────────────────────────
-
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-10">
       <motion.div
@@ -193,6 +199,17 @@ export default function SignUpPage() {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="w-full max-w-sm"
       >
+        {/* Back to home */}
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs font-medium mb-6 transition-colors"
+          style={{ color: "var(--text-muted)" }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-primary)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-muted)"; }}
+        >
+          <ArrowLeft size={13} /> Home
+        </Link>
+
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-8">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
@@ -216,7 +233,6 @@ export default function SignUpPage() {
             <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Free forever — no credit card needed</p>
           </div>
 
-          {/* Error */}
           <AnimatePresence>
             {error && (
               <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -227,17 +243,15 @@ export default function SignUpPage() {
             )}
           </AnimatePresence>
 
-          {/* Form */}
           <form onSubmit={handleSignUp} className="space-y-4">
-            <InputField id="name" label="Full Name (optional)" type="text" value={name} onChange={setName}
-              placeholder="Jane Smith" icon={<User size={15} />} autoComplete="name" />
+            <InputField id="name" label="Full Name (optional)" type="text"
+              value={name} onChange={setName} autoComplete="name" required={false} />
 
-            <InputField id="email" label="Email" type="email" value={email} onChange={setEmail}
-              placeholder="you@example.com" icon={<Mail size={15} />} autoComplete="email" />
+            <InputField id="email" label="Email" type="email"
+              value={email} onChange={setEmail} autoComplete="email" />
 
-            <InputField id="password" label="Password" type={showPw ? "text" : "password"}
-              value={password} onChange={setPassword} placeholder="Min. 8 characters" icon={<Lock size={15} />}
-              autoComplete="new-password"
+            <InputField id="password" label="Password (min. 8 characters)" type={showPw ? "text" : "password"}
+              value={password} onChange={setPassword} autoComplete="new-password"
               rightSlot={
                 <button type="button" onClick={() => setShowPw((v) => !v)} className="focus:outline-none"
                   style={{ color: "var(--text-muted)" }} aria-label={showPw ? "Hide password" : "Show password"}>
@@ -247,8 +261,7 @@ export default function SignUpPage() {
             />
 
             <InputField id="confirm" label="Confirm Password" type={showCfm ? "text" : "password"}
-              value={confirm} onChange={setConfirm} placeholder="Repeat password" icon={<Lock size={15} />}
-              autoComplete="new-password"
+              value={confirm} onChange={setConfirm} autoComplete="new-password"
               rightSlot={
                 <button type="button" onClick={() => setShowCfm((v) => !v)} className="focus:outline-none"
                   style={{ color: "var(--text-muted)" }} aria-label={showCfm ? "Hide password" : "Show password"}>
@@ -268,14 +281,12 @@ export default function SignUpPage() {
             </button>
           </form>
 
-          {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px" style={{ background: "var(--divider)" }} />
             <span className="text-xs" style={{ color: "var(--text-muted)" }}>or</span>
             <div className="flex-1 h-px" style={{ background: "var(--divider)" }} />
           </div>
 
-          {/* Google */}
           <button onClick={handleGoogle} disabled={gLoading || loading}
             className="w-full flex items-center justify-center gap-2.5 py-3 rounded-[var(--radius-md)] text-sm font-medium transition-all duration-200 disabled:opacity-50"
             style={{ background: "var(--glass-bg-elevated)", border: "1px solid var(--glass-border-hover)", color: "var(--text-primary)" }}
@@ -286,11 +297,9 @@ export default function SignUpPage() {
           </button>
         </div>
 
-        {/* Footer link */}
         <p className="text-center text-xs mt-5" style={{ color: "var(--text-muted)" }}>
           Already have an account?{" "}
-          <Link href="/auth" className="font-semibold"
-            style={{ color: "var(--color-accent-light)" }}
+          <Link href="/auth" className="font-semibold" style={{ color: "var(--color-accent-light)" }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "underline"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none"; }}>
             Sign in
