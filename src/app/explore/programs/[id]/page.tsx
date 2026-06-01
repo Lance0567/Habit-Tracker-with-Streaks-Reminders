@@ -73,10 +73,18 @@ function ProgramDetailContent() {
   const isDayDone = (d: number) =>
     !!program && program.days[d - 1].tasks.every((t) => completedSet.has(key(d, t.id)));
 
-  let activeDay = program?.duration ?? 1;
-  if (program) {
+  // activeDay = first incomplete day whose scheduled date has arrived.
+  // Falls back to the last unlocked day when all unlocked days are done.
+  let activeDay = 1;
+  if (program && enrollment) {
+    let found = false;
     for (let d = 1; d <= program.duration; d++) {
-      if (!isDayDone(d)) { activeDay = d; break; }
+      if (!isDayDone(d) && dayIsUnlocked(d)) { activeDay = d; found = true; break; }
+    }
+    if (!found) {
+      for (let d = program.duration; d >= 1; d--) {
+        if (dayIsUnlocked(d)) { activeDay = d; break; }
+      }
     }
   }
   const allDone = !!program && enrollment != null && program.days.every((d) => isDayDone(d.day));
@@ -87,6 +95,13 @@ function ProgramDetailContent() {
   // Scheduled date for a given day (day 1 = start date)
   const scheduledDate = (d: number) =>
     enrollment ? addDays(new Date(enrollment.startedAt), d - 1) : null;
+
+  // A day is unlocked when its scheduled date has arrived (today >= that date)
+  const dayIsUnlocked = (d: number) => {
+    const sd = scheduledDate(d);
+    if (!sd) return false;
+    return !isBefore(startOfDay(new Date()), startOfDay(sd));
+  };
 
   // Days whose scheduled date has passed but aren't completed = behind schedule
   const missed = (enrollment && program && !allDone)
@@ -167,7 +182,7 @@ function ProgramDetailContent() {
 
   const diffColor = DIFFICULTY_COLOR[program.difficulty];
   const selectedDayData = program.days[selectedDay - 1];
-  const selectedDayUnlocked = selectedDay <= activeDay;
+  const selectedDayUnlocked = enrollment != null && dayIsUnlocked(selectedDay);
   const selectedDoneCount = selectedDayData
     ? selectedDayData.tasks.filter((t) => completedSet.has(key(selectedDay, t.id))).length
     : 0;
@@ -390,7 +405,7 @@ function ProgramDetailContent() {
             <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: "thin" }}>
               {program.days.map((d) => {
                 const done = isDayDone(d.day);
-                const locked = d.day > activeDay;
+                const locked = !dayIsUnlocked(d.day);
                 const selected = d.day === selectedDay;
                 const sd = scheduledDate(d.day);
                 const isMissed = sd != null && !done && isBefore(startOfDay(sd), startOfDay(new Date()));
@@ -402,7 +417,7 @@ function ProgramDetailContent() {
                       className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all"
                       style={
                         done
-                          ? { background: program.color, color: "#fff", outline: selected ? `2px solid ${program.color}` : "none", outlineOffset: 2 }
+                          ? { background: program.color, color: "#fff", outline: selected ? "2px solid rgba(255,255,255,0.85)" : "none", outlineOffset: 2 }
                           : selected
                           ? { background: `${program.color}1A`, color: program.color, border: `1.5px solid ${program.color}` }
                           : isMissed
