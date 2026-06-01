@@ -27,6 +27,25 @@ export function getCompletionRate(logs: HabitLog[], habit: Habit, days: number):
   return due === 0 ? 0 : Math.round((done / due) * 100);
 }
 
+export function getAggregateHeatMapData(
+  logs: HabitLog[],
+  totalHabits: number,
+  days = 84
+): HeatMapDay[] {
+  const dateMap = new Map<string, Set<string>>();
+  for (const log of logs) {
+    if (!dateMap.has(log.date)) dateMap.set(log.date, new Set());
+    dateMap.get(log.date)!.add(log.habitId);
+  }
+  return Array.from({ length: days }, (_, i) => {
+    const date = format(subDays(new Date(), days - 1 - i), "yyyy-MM-dd");
+    const count = dateMap.get(date)?.size ?? 0;
+    const pct = totalHabits === 0 ? 0 : count / totalHabits;
+    const level = pct === 0 ? 0 : pct <= 0.25 ? 1 : pct <= 0.5 ? 2 : pct <= 0.75 ? 3 : 4;
+    return { date, count, level: level as 0 | 1 | 2 | 3 | 4 };
+  });
+}
+
 export function getHeatMapData(logs: HabitLog[], habitId: string): HeatMapDay[] {
   const logCounts = new Map<string, number>();
   for (const log of logs) {

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
 import Link from "next/link";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { HabitGrid } from "@/components/habits/HabitGrid";
@@ -11,6 +10,7 @@ import { useHabits } from "@/hooks/useHabits";
 import { useHabitStore } from "@/store/habitStore";
 import { useLocalTime } from "@/hooks/useLocalTime";
 import { Flame, CheckCircle, Target, TrendingUp, Compass } from "lucide-react";
+import { DashboardHeatmap } from "@/components/dashboard/DashboardHeatmap";
 import { getUserPrograms } from "@/lib/storage";
 import { PROGRAMS, totalTasks } from "@/lib/programs";
 import type { UserProgram } from "@/types";
@@ -86,23 +86,6 @@ export default function DashboardPage() {
 
   const color = ringColor(pct);
 
-  // Week bar — computed client-side only to avoid server/client timezone mismatch
-  const [weekDays, setWeekDays] = useState<
-    Array<{ label: string; pct: number; isToday: boolean; isPast: boolean }>
-  >([]);
-  useEffect(() => {
-    const todayIdx = (new Date().getDay() + 6) % 7; // Mon=0 … Sun=6
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - todayIdx);
-    const DAY_LABELS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-    setWeekDays(DAY_LABELS.map((label, i) => {
-      const d = new Date(weekStart);
-      d.setDate(weekStart.getDate() + i);
-      const dateStr = format(d, "yyyy-MM-dd");
-      const done = new Set(logs.filter((l) => l.date === dateStr).map((l) => l.habitId)).size;
-      return { label, pct: totalHabits === 0 ? 0 : done / totalHabits, isToday: i === todayIdx, isPast: i < todayIdx };
-    }));
-  }, [logs, totalHabits]);
 
   const statItems = [
     {
@@ -225,55 +208,13 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* This Week */}
+      {/* Heatmap */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.32, duration: 0.35 }}
       >
-        <GlassCard className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
-            This Week
-          </p>
-          <div className="grid grid-cols-7 gap-2">
-            {weekDays.map((day, i) => (
-              <div key={i} className="flex flex-col items-center gap-1.5">
-                <span
-                  className="text-xs font-semibold"
-                  style={{ color: day.isToday ? "var(--text-primary)" : "var(--text-muted)" }}
-                >
-                  {day.label}
-                </span>
-                <div
-                  className="w-full rounded-full overflow-hidden relative"
-                  style={{ height: 40, background: "var(--divider)" }}
-                >
-                  <div
-                    className="absolute bottom-0 left-0 right-0 rounded-full"
-                    style={{
-                      height: `${Math.round(day.pct * 100)}%`,
-                      background: day.isToday
-                        ? color
-                        : day.isPast && day.pct > 0
-                        ? "var(--glass-border)"
-                        : "transparent",
-                      transition: "height 0.5s cubic-bezier(0.4,0,0.2,1)",
-                    }}
-                  />
-                </div>
-                <span
-                  className="text-xs tabular-nums"
-                  style={{ color: day.isToday ? "var(--text-secondary)" : "var(--text-muted)" }}
-                >
-                  {day.isToday || day.isPast ? `${Math.round(day.pct * 100)}%` : "—"}
-                </span>
-                {day.isToday && (
-                  <span className="w-1 h-1 rounded-full" style={{ background: "var(--text-secondary)" }} />
-                )}
-              </div>
-            ))}
-          </div>
-        </GlassCard>
+        <DashboardHeatmap logs={logs} habits={habits} accentColor={color} />
       </motion.div>
 
       {/* Active Programs */}
