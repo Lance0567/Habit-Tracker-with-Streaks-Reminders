@@ -19,7 +19,10 @@ screenshot_final.mjs
 .claude/
 
 # skills
-.agents
+.agents/
+
+# MCP
+.playwright-mcp
 
 # env files
 .env
