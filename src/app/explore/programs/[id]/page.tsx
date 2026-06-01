@@ -73,6 +73,17 @@ function ProgramDetailContent() {
   const isDayDone = (d: number) =>
     !!program && program.days[d - 1].tasks.every((t) => completedSet.has(key(d, t.id)));
 
+  // Scheduled date for a given day (day 1 = start date)
+  const scheduledDate = (d: number) =>
+    enrollment ? addDays(new Date(enrollment.startedAt), d - 1) : null;
+
+  // A day is unlocked when its scheduled date has arrived (today >= that date)
+  const dayIsUnlocked = (d: number) => {
+    const sd = scheduledDate(d);
+    if (!sd) return false;
+    return !isBefore(startOfDay(new Date()), startOfDay(sd));
+  };
+
   // activeDay = first incomplete day whose scheduled date has arrived.
   // Falls back to the last unlocked day when all unlocked days are done.
   let activeDay = 1;
@@ -91,17 +102,6 @@ function ProgramDetailContent() {
   const doneCount = enrollment?.completedTasks.length ?? 0;
   const total = program ? totalTasks(program) : 0;
   const progress = total ? Math.min(Math.round((doneCount / total) * 100), 100) : 0;
-
-  // Scheduled date for a given day (day 1 = start date)
-  const scheduledDate = (d: number) =>
-    enrollment ? addDays(new Date(enrollment.startedAt), d - 1) : null;
-
-  // A day is unlocked when its scheduled date has arrived (today >= that date)
-  const dayIsUnlocked = (d: number) => {
-    const sd = scheduledDate(d);
-    if (!sd) return false;
-    return !isBefore(startOfDay(new Date()), startOfDay(sd));
-  };
 
   // Days whose scheduled date has passed but aren't completed = behind schedule
   const missed = (enrollment && program && !allDone)
