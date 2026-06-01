@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Plus, Sun, Moon } from "lucide-react";
 import { format } from "date-fns";
 import { usePathname } from "next/navigation";
@@ -10,15 +11,16 @@ import { useUIStore } from "@/store/uiStore";
 import { useHabitStore } from "@/store/habitStore";
 import { useUser } from "@/hooks/useUser";
 
-function getGreeting() {
-  const hour = new Date().getHours();
+function getGreeting(hour: number) {
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";
 }
 
 export function TopBar() {
-  const today = new Date();
+  const [clientDate, setClientDate] = useState<Date | null>(null);
+  useEffect(() => { setClientDate(new Date()); }, []);
+
   const pathname = usePathname();
   const setNewHabitOpen = useUIStore((s) => s.setNewHabitOpen);
   const settings = useHabitStore((s) => s.settings);
@@ -45,10 +47,10 @@ export function TopBar() {
     >
       <div>
         <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
-          {format(today, "EEEE, MMMM d")}
+          {clientDate ? format(clientDate, "EEEE, MMMM d") : ""}
         </p>
         <h1 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-          {getGreeting()}{firstName ? `, ${firstName}!` : ""}
+          {clientDate ? getGreeting(clientDate.getHours()) : ""}{firstName ? `, ${firstName}!` : ""}
         </h1>
       </div>
 
