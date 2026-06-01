@@ -86,20 +86,23 @@ export default function DashboardPage() {
 
   const color = ringColor(pct);
 
-  // Build week bar using real logs for all habits (not just top-4 trendData)
-  const todayIdx = (new Date().getDay() + 6) % 7; // Mon=0 … Sun=6
-  const weekStart = new Date();
-  weekStart.setDate(weekStart.getDate() - todayIdx);
-
-  const DAY_LABELS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-  const weekDays = DAY_LABELS.map((label, i) => {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    const dateStr = format(d, "yyyy-MM-dd");
-    const done = new Set(logs.filter((l) => l.date === dateStr).map((l) => l.habitId)).size;
-    const dayPct = totalHabits === 0 ? 0 : done / totalHabits;
-    return { label, pct: dayPct, isToday: i === todayIdx, isPast: i < todayIdx };
-  });
+  // Week bar — computed client-side only to avoid server/client timezone mismatch
+  const [weekDays, setWeekDays] = useState<
+    Array<{ label: string; pct: number; isToday: boolean; isPast: boolean }>
+  >([]);
+  useEffect(() => {
+    const todayIdx = (new Date().getDay() + 6) % 7; // Mon=0 … Sun=6
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - todayIdx);
+    const DAY_LABELS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+    setWeekDays(DAY_LABELS.map((label, i) => {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + i);
+      const dateStr = format(d, "yyyy-MM-dd");
+      const done = new Set(logs.filter((l) => l.date === dateStr).map((l) => l.habitId)).size;
+      return { label, pct: totalHabits === 0 ? 0 : done / totalHabits, isToday: i === todayIdx, isPast: i < todayIdx };
+    }));
+  }, [logs, totalHabits]);
 
   const statItems = [
     {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { motion } from "framer-motion";
-import { Zap, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Zap, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase";
@@ -19,56 +19,82 @@ function GoogleIcon() {
 }
 
 function InputField({
-  id, label, type, value, onChange, placeholder, icon, rightSlot,
+  id, label, type, value, onChange, rightSlot,
 }: {
   id: string;
   label: string;
   type: string;
   value: string;
   onChange: (v: string) => void;
-  placeholder?: string;
-  icon: React.ReactNode;
   rightSlot?: React.ReactNode;
 }) {
+  const [focused, setFocused] = useState(false);
+  const floated = focused || value.length > 0;
+
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="text-xs font-semibold uppercase tracking-[0.15em]"
-        style={{ color: "var(--text-muted)" }}>
+    <div className="relative" style={{ height: 56 }}>
+      <motion.label
+        htmlFor={id}
+        animate={{
+          y: floated ? 0 : 11,
+          scale: floated ? 0.78 : 1,
+          color: focused
+            ? "var(--color-accent)"
+            : floated
+            ? "var(--text-secondary)"
+            : "var(--text-muted)",
+        }}
+        initial={false}
+        transition={{ duration: 0.14, ease: [0.4, 0, 0.2, 1] }}
+        style={{
+          position: "absolute",
+          left: 16,
+          top: 9,
+          fontSize: 13,
+          fontWeight: 500,
+          transformOrigin: "left top",
+          pointerEvents: "none",
+          zIndex: 1,
+          whiteSpace: "nowrap",
+          lineHeight: 1,
+        }}
+      >
         {label}
-      </label>
-      <div className="relative">
-        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ color: "var(--text-muted)" }}>
-          {icon}
-        </span>
-        <input
-          id={id}
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          autoComplete={type === "password" ? "current-password" : "email"}
-          required
-          className="w-full pl-10 pr-10 py-3 rounded-[var(--radius-md)] text-sm transition-all duration-200 outline-none"
-          style={{
-            background: "var(--glass-bg-subtle)",
-            border: "1px solid var(--glass-border)",
-            color: "var(--text-primary)",
-          }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--color-accent)"; e.currentTarget.style.boxShadow = "var(--glow-sm)"; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.boxShadow = "none"; }}
-        />
-        {rightSlot && (
-          <span className="absolute right-3.5 top-1/2 -translate-y-1/2">
-            {rightSlot}
-          </span>
-        )}
-      </div>
+      </motion.label>
+
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder=""
+        autoComplete={type === "password" ? "current-password" : "email"}
+        required
+        className="absolute inset-0 w-full rounded-xl text-sm outline-none"
+        style={{
+          paddingLeft: 16,
+          paddingRight: rightSlot ? "3rem" : 16,
+          paddingTop: floated ? 22 : 14,
+          paddingBottom: floated ? 8 : 14,
+          transition: "padding-top 0.14s cubic-bezier(0.4,0,0.2,1), padding-bottom 0.14s cubic-bezier(0.4,0,0.2,1), border-color 0.14s, box-shadow 0.14s",
+          background: "var(--glass-bg-subtle)",
+          border: `1.5px solid ${focused ? "var(--color-accent)" : "var(--glass-border)"}`,
+          boxShadow: focused ? "0 0 0 3px var(--color-accent-glow)" : "none",
+          color: "var(--text-primary)",
+        }}
+      />
+
+      {rightSlot && (
+        <div className="absolute right-1.5 inset-y-0 flex items-center">
+          {rightSlot}
+        </div>
+      )}
     </div>
   );
 }
 
-// Inner component — useSearchParams requires a Suspense boundary in Next.js 14
 function SignInContent() {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
@@ -79,7 +105,6 @@ function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Show errors forwarded from the OAuth callback
   useEffect(() => {
     const urlError = searchParams.get("error");
     if (urlError) setError(decodeURIComponent(urlError));
@@ -114,62 +139,165 @@ function SignInContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-10 overflow-hidden">
+      {/* Background: grid texture + ambient glow */}
+      <div className="absolute inset-0 pointer-events-none select-none" aria-hidden="true">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+          }}
+        />
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full"
+          style={{
+            background:
+              "radial-gradient(ellipse, rgba(124,58,237,0.16) 0%, rgba(124,58,237,0.05) 45%, transparent 70%)",
+            filter: "blur(56px)",
+          }}
+        />
+      </div>
+
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full max-w-sm"
+        transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full max-w-sm"
       >
+        {/* Back to home */}
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs font-medium mb-6 transition-colors"
+          style={{ color: "var(--text-muted)" }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-primary)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-muted)"; }}
+        >
+          <ArrowLeft size={13} /> Home
+        </Link>
+
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-            style={{ background: "rgba(124,58,237,0.18)", border: "1px solid rgba(124,58,237,0.35)", boxShadow: "0 0 28px rgba(124,58,237,0.22)" }}>
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center"
+            style={{
+              background: "rgba(124,58,237,0.18)",
+              border: "1px solid rgba(124,58,237,0.35)",
+              boxShadow: "0 0 28px rgba(124,58,237,0.22)",
+            }}
+          >
             <Zap size={22} style={{ color: "var(--color-accent-light)" }} />
           </div>
           <div className="text-center">
-            <h1 className="text-xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
+            <h1
+              className="text-xl font-bold tracking-tight"
+              style={{ color: "var(--text-primary)" }}
+            >
               Habit<span style={{ color: "var(--color-accent-light)" }}>Flow</span>
             </h1>
-            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Build habits that stick</p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+              Build habits that stick
+            </p>
           </div>
         </div>
 
         {/* Card */}
-        <div className="rounded-[var(--radius-lg)] p-6 space-y-5"
-          style={{ background: "var(--glass-bg-default)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid var(--glass-border)" }}>
-
+        <div
+          className="rounded-[var(--radius-lg)] p-6 space-y-5"
+          style={{
+            background: "var(--glass-bg-default)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            border: "1px solid var(--glass-border)",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
+          }}
+        >
           <div>
-            <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>Welcome back</h2>
-            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Sign in to your account</p>
+            <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
+              Welcome back
+            </h2>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+              Sign in to your account
+            </p>
           </div>
 
-          {error && (
-            <p className="text-xs px-3 py-2.5 rounded-lg" style={{ background: "rgba(244,63,94,0.10)", border: "1px solid rgba(244,63,94,0.25)", color: "#F43F5E" }}>
-              {error}
-            </p>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.p
+                key="error"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18 }}
+                className="text-xs px-3 py-2.5 rounded-lg"
+                style={{
+                  background: "rgba(244,63,94,0.10)",
+                  border: "1px solid rgba(244,63,94,0.25)",
+                  color: "#F43F5E",
+                }}
+              >
+                {error}
+              </motion.p>
+            )}
+          </AnimatePresence>
 
           <form onSubmit={handleEmailSignIn} className="space-y-4">
-            <InputField id="email" label="Email" type="email" value={email} onChange={setEmail}
-              placeholder="you@example.com" icon={<Mail size={15} />} />
+            <InputField id="email" label="Email" type="email" value={email} onChange={setEmail} />
 
-            <InputField id="password" label="Password" type={showPw ? "text" : "password"}
-              value={password} onChange={setPassword} placeholder="••••••••" icon={<Lock size={15} />}
-              rightSlot={
-                <button type="button" onClick={() => setShowPw((v) => !v)} className="focus:outline-none"
-                  style={{ color: "var(--text-muted)" }} aria-label={showPw ? "Hide password" : "Show password"}>
-                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              }
-            />
+            <div className="space-y-1">
+              <InputField
+                id="password"
+                label="Password"
+                type={showPw ? "text" : "password"}
+                value={password}
+                onChange={setPassword}
+                rightSlot={
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((v) => !v)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+                    style={{ color: "var(--text-muted)" }}
+                    aria-label={showPw ? "Hide password" : "Show password"}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; }}
+                  >
+                    {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                }
+              />
+              <div className="flex justify-end pt-0.5">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-xs font-medium transition-colors"
+                  style={{ color: "var(--color-accent-light)" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "underline"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none"; }}
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
 
-            <button type="submit" disabled={loading || !email || !password}
+            <button
+              type="submit"
+              disabled={loading || !email || !password}
               className="w-full py-3 rounded-[var(--radius-md)] text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-white"
-              style={{ background: "var(--color-accent)", boxShadow: loading || !email || !password ? "none" : "0 0 28px rgba(124,58,237,0.40)" }}
-              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "#6D28D9"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--color-accent)"; }}>
-              {loading ? <span className="inline-flex items-center gap-2"><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Signing in…</span> : "Sign In"}
+              style={{
+                background: "var(--color-accent)",
+                boxShadow: loading || !email || !password ? "none" : "0 0 28px rgba(124,58,237,0.40)",
+              }}
+              onMouseEnter={(e) => { if (!loading && email && password) e.currentTarget.style.background = "#6D28D9"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--color-accent)"; }}
+            >
+              {loading
+                ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Signing in…
+                  </span>
+                )
+                : "Sign in"}
             </button>
           </form>
 
@@ -179,22 +307,34 @@ function SignInContent() {
             <div className="flex-1 h-px" style={{ background: "var(--divider)" }} />
           </div>
 
-          <button onClick={handleGoogle} disabled={gLoading || loading}
+          <button
+            onClick={handleGoogle}
+            disabled={gLoading || loading}
             className="w-full flex items-center justify-center gap-2.5 py-3 rounded-[var(--radius-md)] text-sm font-medium transition-all duration-200 disabled:opacity-50"
-            style={{ background: "var(--glass-bg-elevated)", border: "1px solid var(--glass-border-hover)", color: "var(--text-primary)" }}
+            style={{
+              background: "var(--glass-bg-elevated)",
+              border: "1px solid var(--glass-border-hover)",
+              color: "var(--text-primary)",
+            }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(124,58,237,0.40)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--glass-border-hover)"; }}>
-            {gLoading ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <GoogleIcon />}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--glass-border-hover)"; }}
+          >
+            {gLoading
+              ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              : <GoogleIcon />}
             Continue with Google
           </button>
         </div>
 
         <p className="text-center text-xs mt-5" style={{ color: "var(--text-muted)" }}>
           Don&apos;t have an account?{" "}
-          <Link href="/auth/signup" className="font-semibold transition-colors"
+          <Link
+            href="/auth/signup"
+            className="font-semibold transition-colors"
             style={{ color: "var(--color-accent-light)" }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "underline"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none"; }}>
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none"; }}
+          >
             Create one
           </Link>
         </p>
@@ -203,7 +343,6 @@ function SignInContent() {
   );
 }
 
-// Suspense wrapper required by Next.js 14 when useSearchParams is used in a page
 export default function SignInPage() {
   return (
     <Suspense>
