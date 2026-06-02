@@ -43,6 +43,7 @@ type ActivePlanItem = { program: Program; enrollment: UserProgram; progress: num
 export default function DashboardPage() {
   const { habits, completedToday, todayCounts, streaks, completionRates, isLoading, toggleLog } = useHabits();
   const { logs } = useHabitStore();
+  const accentColor = useHabitStore((s) => s.settings?.accentColor) ?? "#7C3AED";
   const { formatted } = useLocalTime();
 
   const [activePrograms, setActivePrograms] = useState<ActivePlanItem[]>([]);
@@ -153,9 +154,9 @@ export default function DashboardPage() {
               <span
                 className="inline-block text-xs font-mono px-2.5 py-1 rounded-full"
                 style={{
-                  background: "var(--glass-bg-subtle)",
-                  color: "var(--text-muted)",
-                  border: "1px solid var(--divider)",
+                  background: `${accentColor}15`,
+                  color: accentColor,
+                  border: `1px solid ${accentColor}40`,
                 }}
               >
                 {totalHabits} active habits

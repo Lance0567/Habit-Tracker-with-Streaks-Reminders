@@ -29,6 +29,9 @@ screenshot_final.mjs
 .env.local
 .env*.local
 
+# server log
+.dev-server.log
+
 # OS
 .DS_Store
 Thumbs.db
