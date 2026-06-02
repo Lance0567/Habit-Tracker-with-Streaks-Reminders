@@ -72,7 +72,7 @@ function EditForm({ habit }: { habit: Habit }) {
       reminders,
       updatedAt: new Date().toISOString(),
     });
-    router.push(`/habits/${habit.id}`);
+    router.replace(`/habits/${habit.id}`);
   };
 
   const handleDelete = async () => {
@@ -88,7 +88,7 @@ function EditForm({ habit }: { habit: Habit }) {
         className="flex items-center gap-3"
       >
         <button
-          onClick={() => router.back()}
+          onClick={() => router.replace(`/habits/${habit.id}`)}
           className="p-2 glass rounded-[var(--radius-md)] transition-all"
           style={{ color: "var(--text-muted)", border: "1px solid var(--glass-border)" }}
         >
@@ -144,7 +144,7 @@ function EditForm({ habit }: { habit: Habit }) {
         <GlassButton variant="danger" className="flex-none" onClick={() => setConfirmDelete(true)} disabled={saving}>
           Delete
         </GlassButton>
-        <GlassButton variant="secondary" onClick={() => router.back()} className="flex-1">
+        <GlassButton variant="secondary" onClick={() => router.replace(`/habits/${habit.id}`)} className="flex-1">
           Cancel
         </GlassButton>
         <GlassButton variant="primary" className="flex-1" onClick={handleSave} disabled={saving || !name.trim()}>

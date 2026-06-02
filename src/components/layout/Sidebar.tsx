@@ -297,7 +297,7 @@ export function Sidebar() {
           }}
           onMouseLeave={(e) => {
             const b = e.currentTarget as HTMLButtonElement;
-            b.style.borderColor = "";
+            b.style.borderColor = "var(--nav-border)";
             b.style.color = "var(--text-muted)";
             b.style.boxShadow = isDark
               ? "0 2px 12px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05)"

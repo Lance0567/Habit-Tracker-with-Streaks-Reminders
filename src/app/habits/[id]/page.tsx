@@ -13,7 +13,6 @@ import { HeatMap } from "@/components/calendar/HeatMap";
 import { useHabitStore } from "@/store/habitStore";
 import { useHabitStats } from "@/hooks/useAnalytics";
 import { getIcon } from "@/lib/icons";
-import Link from "next/link";
 
 interface StatItem {
   label: string;
@@ -114,11 +113,9 @@ export default function HabitDetailPage({ params }: { params: { id: string } }) 
 
             <div className="flex items-center gap-2 flex-shrink-0">
               <StreakBadge count={stats.currentStreak} size="sm" />
-              <Link href={`/habits/${habit.id}/edit`}>
-                <GlassButton variant="secondary" size="sm">
-                  <Edit size={13} />
-                </GlassButton>
-              </Link>
+              <GlassButton variant="secondary" size="sm" onClick={() => router.replace(`/habits/${habit.id}/edit`)}>
+                <Edit size={13} />
+              </GlassButton>
             </div>
           </div>
         </GlassCard>
@@ -164,11 +161,9 @@ export default function HabitDetailPage({ params }: { params: { id: string } }) 
               </button>
               <div className="flex items-center gap-3">
                 <StreakBadge count={stats.currentStreak} size="md" />
-                <Link href={`/habits/${habit.id}/edit`}>
-                  <GlassButton variant="secondary" size="sm">
-                    <Edit size={14} /> Edit
-                  </GlassButton>
-                </Link>
+                <GlassButton variant="secondary" size="sm" onClick={() => router.replace(`/habits/${habit.id}/edit`)}>
+                  <Edit size={14} /> Edit
+                </GlassButton>
               </div>
             </div>
 
