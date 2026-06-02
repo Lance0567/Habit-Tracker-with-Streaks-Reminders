@@ -10,6 +10,7 @@ import type { Habit } from "@/types";
 interface HabitListProps {
   habits: Habit[];
   completedToday: Set<string>;
+  todayCounts: Record<string, number>;
   streaks: Record<string, number>;
   completionRates: Record<string, number>;
   onToggle?: (habitId: string) => void;
@@ -28,6 +29,7 @@ const item = {
 export function HabitList({
   habits,
   completedToday,
+  todayCounts,
   streaks,
   completionRates,
   onToggle,
@@ -67,6 +69,7 @@ export function HabitList({
             habit={habit}
             streak={streaks[habit.id] ?? 0}
             completedToday={completedToday.has(habit.id)}
+            currentCount={todayCounts[habit.id] ?? 0}
             completionRate={completionRates[habit.id] ?? 0}
             onToggle={onToggle ? () => onToggle(habit.id) : undefined}
           />

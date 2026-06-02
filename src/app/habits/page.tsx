@@ -19,7 +19,7 @@ import { useHabitStore } from "@/store/habitStore";
 // Inner component reads URL search params (requires Suspense boundary)
 function HabitsContent() {
   const searchParams = useSearchParams();
-  const { habits, completedToday, streaks, completionRates, isLoading, toggleLog } = useHabits();
+  const { habits, completedToday, todayCounts, streaks, completionRates, isLoading, toggleLog } = useHabits();
   const { categories } = useCategories();
   const setNewHabitOpen = useUIStore((s) => s.setNewHabitOpen);
   const { settings, updateSettings } = useHabitStore();
@@ -109,6 +109,7 @@ function HabitsContent() {
         <HabitGrid
           habits={filtered}
           completedToday={completedToday}
+          todayCounts={todayCounts}
           streaks={streaks}
           completionRates={completionRates}
           onToggle={toggleLog}
@@ -117,6 +118,7 @@ function HabitsContent() {
         <HabitList
           habits={filtered}
           completedToday={completedToday}
+          todayCounts={todayCounts}
           streaks={streaks}
           completionRates={completionRates}
           onToggle={toggleLog}

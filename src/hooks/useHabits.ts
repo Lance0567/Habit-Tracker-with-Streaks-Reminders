@@ -13,13 +13,21 @@ export function useHabits() {
     [habits]
   );
 
+  const todayCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const log of logs) {
+      if (log.date === today) counts[log.habitId] = log.completedCount;
+    }
+    return counts;
+  }, [logs, today]);
+
   const completedToday = useMemo(() => {
     const set = new Set<string>();
-    for (const log of logs) {
-      if (log.date === today) set.add(log.habitId);
+    for (const habit of activeHabits) {
+      if ((todayCounts[habit.id] ?? 0) >= habit.targetCount) set.add(habit.id);
     }
     return set;
-  }, [logs, today]);
+  }, [activeHabits, todayCounts]);
 
   const streaks = useMemo(() => {
     const map: Record<string, number> = {};
@@ -40,6 +48,7 @@ export function useHabits() {
   return {
     habits: activeHabits,
     completedToday,
+    todayCounts,
     streaks,
     completionRates,
     isLoading,

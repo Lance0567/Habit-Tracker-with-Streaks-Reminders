@@ -160,21 +160,23 @@ export async function getAllLogs(): Promise<HabitLog[]> {
 
 export async function toggleLog(
   habitId: string,
-  date: string
-): Promise<{ action: "added" | "removed"; log?: HabitLog }> {
+  date: string,
+  targetCount: number = 1
+): Promise<{ action: "removed" | "upserted"; log?: HabitLog }> {
   const userId = await getUserId();
   const supabase = createClient();
 
   const { data: existing, error: fetchError } = await supabase
     .from("habit_logs")
-    .select("id")
+    .select("id, completed_count")
     .eq("habit_id", habitId)
     .eq("date", date)
     .maybeSingle();
 
   if (fetchError) throw fetchError;
 
-  if (existing) {
+  // At or above target → reset (delete)
+  if (existing && existing.completed_count >= targetCount) {
     const { error } = await supabase
       .from("habit_logs")
       .delete()
@@ -183,6 +185,25 @@ export async function toggleLog(
     return { action: "removed" };
   }
 
+  if (existing) {
+    // Log exists but below target → increment
+    const newCount = existing.completed_count + 1;
+    const { error } = await supabase
+      .from("habit_logs")
+      .update({ completed_count: newCount })
+      .eq("id", existing.id);
+    if (error) throw error;
+    const log: HabitLog = {
+      id: existing.id,
+      habitId,
+      date,
+      completedCount: newCount,
+      completedAt: new Date().toISOString(),
+    };
+    return { action: "upserted", log };
+  }
+
+  // No log → create with count 1
   const newLog: HabitLog = {
     id:             crypto.randomUUID(),
     habitId,
@@ -201,7 +222,7 @@ export async function toggleLog(
   });
   if (error) throw error;
 
-  return { action: "added", log: newLog };
+  return { action: "upserted", log: newLog };
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────
