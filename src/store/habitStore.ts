@@ -26,7 +26,7 @@ interface HabitStore {
   resetData: () => Promise<void>;
 }
 
-export const useHabitStore = create<HabitStore>((set) => ({
+export const useHabitStore = create<HabitStore>((set, get) => ({
   habits: [],
   logs: [],
   categories: [],
@@ -72,13 +72,22 @@ export const useHabitStore = create<HabitStore>((set) => ({
 
   toggleLog: async (habitId) => {
     const today = format(new Date(), "yyyy-MM-dd");
-    const result = await storage.toggleLog(habitId, today);
+    const targetCount = get().habits.find((h) => h.id === habitId)?.targetCount ?? 1;
+    const result = await storage.toggleLog(habitId, today, targetCount);
     if (result.action === "removed") {
       set((s) => ({
         logs: s.logs.filter((l) => !(l.habitId === habitId && l.date === today)),
       }));
     } else if (result.log) {
-      set((s) => ({ logs: [...s.logs, result.log!] }));
+      set((s) => {
+        const idx = s.logs.findIndex((l) => l.habitId === habitId && l.date === today);
+        if (idx >= 0) {
+          const next = [...s.logs];
+          next[idx] = result.log!;
+          return { logs: next };
+        }
+        return { logs: [...s.logs, result.log!] };
+      });
     }
   },
 

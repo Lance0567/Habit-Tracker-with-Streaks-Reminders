@@ -62,7 +62,7 @@ export function DashboardHeatmap({ logs, habits, accentColor }: DashboardHeatmap
   const monthLabels = useMemo(() => getMonthLabels(grid), [grid]);
 
   const aggregateMap = useMemo(() => {
-    const data = getAggregateHeatMapData(logs, habits.length, WEEKS * 7);
+    const data = getAggregateHeatMapData(logs, habits, WEEKS * 7);
     return new Map(data.map((d) => [d.date, d]));
   }, [logs, habits.length]);
 

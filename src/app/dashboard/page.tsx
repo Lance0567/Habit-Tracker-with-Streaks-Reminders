@@ -41,7 +41,7 @@ function motivationalCopy(pct: number): string {
 type ActivePlanItem = { program: Program; enrollment: UserProgram; progress: number; activeDay: number };
 
 export default function DashboardPage() {
-  const { habits, completedToday, streaks, completionRates, isLoading, toggleLog } = useHabits();
+  const { habits, completedToday, todayCounts, streaks, completionRates, isLoading, toggleLog } = useHabits();
   const { logs } = useHabitStore();
   const { formatted } = useLocalTime();
 
@@ -296,6 +296,7 @@ export default function DashboardPage() {
         <HabitGrid
           habits={habits}
           completedToday={completedToday}
+          todayCounts={todayCounts}
           streaks={streaks}
           completionRates={completionRates}
           onToggle={toggleLog}

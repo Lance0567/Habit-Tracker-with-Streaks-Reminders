@@ -46,6 +46,7 @@ function HabitForm({ onClose }: { onClose: () => void }) {
   const [frequency, setFrequency] = useState<HabitFrequency>("daily");
   const [customDays, setCustomDays] = useState<number[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [targetCount, setTargetCount] = useState(1);
   const [saving, setSaving] = useState(false);
   const [showDesc, setShowDesc] = useState(false);
   const [showReminders, setShowReminders] = useState(false);
@@ -64,7 +65,7 @@ function HabitForm({ onClose }: { onClose: () => void }) {
         color,
         frequency,
         customDays: frequency === "custom" ? customDays : undefined,
-        targetCount: 1,
+        targetCount,
         unit: "times",
         reminders,
         archived: false,
@@ -289,7 +290,51 @@ function HabitForm({ onClose }: { onClose: () => void }) {
         </AnimatePresence>
       </div>
 
-      {/* Zone 4: Reminders */}
+      {/* Zone 4: Daily Target */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--text-muted)" }}>Daily target</p>
+          <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+            Tap to count up (e.g. 8 glasses)
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => setTargetCount((n) => Math.max(1, n - 1))}
+            disabled={targetCount <= 1}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-bold transition-all duration-200 disabled:opacity-30"
+            style={{
+              background: "var(--glass-bg-subtle)",
+              border: "1px solid var(--glass-border)",
+              color: "var(--text-primary)",
+            }}
+          >
+            −
+          </button>
+          <span
+            className="w-8 text-center text-sm font-bold tabular-nums"
+            style={{ color: targetCount > 1 ? color : "var(--text-primary)" }}
+          >
+            {targetCount}
+          </span>
+          <button
+            type="button"
+            onClick={() => setTargetCount((n) => Math.min(99, n + 1))}
+            disabled={targetCount >= 99}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-bold transition-all duration-200 disabled:opacity-30"
+            style={{
+              background: "var(--glass-bg-subtle)",
+              border: "1px solid var(--glass-border)",
+              color: "var(--text-primary)",
+            }}
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      {/* Zone 5: Reminders */}
       <div className="space-y-2">
         <button
           type="button"
@@ -335,7 +380,7 @@ function HabitForm({ onClose }: { onClose: () => void }) {
         </AnimatePresence>
       </div>
 
-      {/* Zone 5: CTA */}
+      {/* Zone 6: CTA */}
       <div className="flex gap-3 pt-1">
         <button
           type="button"
