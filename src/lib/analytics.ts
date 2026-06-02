@@ -11,9 +11,21 @@ import {
 import type { Habit, HabitLog, Category, HeatMapDay } from "@/types";
 import { isHabitDueOnDate } from "./streaks";
 
+// Only logs where completedCount meets the habit's target count as a true completion
+function buildCompletedSet(logs: HabitLog[], habits: Habit[]): Set<string> {
+  const targetMap = new Map(habits.map((h) => [h.id, h.targetCount]));
+  return new Set(
+    logs
+      .filter((l) => l.completedCount >= (targetMap.get(l.habitId) ?? 1))
+      .map((l) => `${l.habitId}:${l.date}`)
+  );
+}
+
 export function getCompletionRate(logs: HabitLog[], habit: Habit, days: number): number {
   const logDates = new Set(
-    logs.filter((l) => l.habitId === habit.id).map((l) => l.date)
+    logs
+      .filter((l) => l.habitId === habit.id && l.completedCount >= habit.targetCount)
+      .map((l) => l.date)
   );
   let due = 0;
   let done = 0;
@@ -29,14 +41,18 @@ export function getCompletionRate(logs: HabitLog[], habit: Habit, days: number):
 
 export function getAggregateHeatMapData(
   logs: HabitLog[],
-  totalHabits: number,
+  habits: Habit[],
   days = 84
 ): HeatMapDay[] {
+  const targetMap = new Map(habits.map((h) => [h.id, h.targetCount]));
   const dateMap = new Map<string, Set<string>>();
   for (const log of logs) {
-    if (!dateMap.has(log.date)) dateMap.set(log.date, new Set());
-    dateMap.get(log.date)!.add(log.habitId);
+    if (log.completedCount >= (targetMap.get(log.habitId) ?? 1)) {
+      if (!dateMap.has(log.date)) dateMap.set(log.date, new Set());
+      dateMap.get(log.date)!.add(log.habitId);
+    }
   }
+  const totalHabits = habits.length;
   return Array.from({ length: days }, (_, i) => {
     const date = format(subDays(new Date(), days - 1 - i), "yyyy-MM-dd");
     const count = dateMap.get(date)?.size ?? 0;
@@ -46,10 +62,10 @@ export function getAggregateHeatMapData(
   });
 }
 
-export function getHeatMapData(logs: HabitLog[], habitId: string): HeatMapDay[] {
+export function getHeatMapData(logs: HabitLog[], habitId: string, targetCount = 1): HeatMapDay[] {
   const logCounts = new Map<string, number>();
   for (const log of logs) {
-    if (log.habitId === habitId) {
+    if (log.habitId === habitId && log.completedCount >= targetCount) {
       logCounts.set(log.date, (logCounts.get(log.date) ?? 0) + log.completedCount);
     }
   }
@@ -65,7 +81,7 @@ export function getOverallWeeklyData(
   habits: Habit[],
   logs: HabitLog[]
 ): { week: string; rate: number }[] {
-  const logSet = new Set(logs.map((l) => `${l.habitId}:${l.date}`));
+  const logSet = buildCompletedSet(logs, habits);
   return Array.from({ length: 12 }, (_, i) => {
     const weekIdx = 11 - i;
     const weekStart = startOfWeek(subDays(new Date(), weekIdx * 7));
@@ -93,7 +109,7 @@ export function getMonthlyCompletionData(
   habits: Habit[],
   logs: HabitLog[]
 ): { name: string; streak: number }[] {
-  const logSet = new Set(logs.map((l) => `${l.habitId}:${l.date}`));
+  const logSet = buildCompletedSet(logs, habits);
   return Array.from({ length: 6 }, (_, i) => {
     const monthIdx = 5 - i;
     const d = subMonths(new Date(), monthIdx);
@@ -117,7 +133,7 @@ export function getYearlyAvgData(
   habits: Habit[],
   logs: HabitLog[]
 ): { week: string; rate: number }[] {
-  const logSet = new Set(logs.map((l) => `${l.habitId}:${l.date}`));
+  const logSet = buildCompletedSet(logs, habits);
   return Array.from({ length: 12 }, (_, i) => {
     const monthIdx = 11 - i;
     const d = subMonths(new Date(), monthIdx);
@@ -146,7 +162,7 @@ export function getYearlyCompletionData(
   habits: Habit[],
   logs: HabitLog[]
 ): { name: string; streak: number }[] {
-  const logSet = new Set(logs.map((l) => `${l.habitId}:${l.date}`));
+  const logSet = buildCompletedSet(logs, habits);
   return Array.from({ length: 12 }, (_, i) => {
     const monthIdx = 11 - i;
     const d = subMonths(new Date(), monthIdx);
@@ -170,7 +186,7 @@ export function getThisWeekTrendData(
   habits: Habit[],
   logs: HabitLog[]
 ): { day: string; [key: string]: number | string }[] {
-  const logSet = new Set(logs.map((l) => `${l.habitId}:${l.date}`));
+  const logSet = buildCompletedSet(logs, habits);
   const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const today = new Date();
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });

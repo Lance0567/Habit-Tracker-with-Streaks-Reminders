@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -13,6 +13,7 @@ interface HabitListItemProps {
   habit: Habit;
   streak: number;
   completedToday: boolean;
+  currentCount: number;
   completionRate: number;
   onToggle?: () => void;
 }
@@ -21,17 +22,17 @@ export function HabitListItem({
   habit,
   streak,
   completedToday,
+  currentCount,
   completionRate,
   onToggle,
 }: HabitListItemProps) {
-  const [checked, setChecked] = useState(completedToday);
+  const checked = completedToday;
   const [cardHovered, setCardHovered] = useState(false);
   const IconComponent = getIcon(habit.icon);
 
-  const handleToggle = () => {
-    setChecked((c) => !c);
+  const handleToggle = useCallback(() => {
     onToggle?.();
-  };
+  }, [onToggle]);
 
   return (
     <GlassCard
@@ -92,6 +93,8 @@ export function HabitListItem({
             color={habit.color}
             size={36}
             cardHovered={cardHovered}
+            currentCount={currentCount}
+            targetCount={habit.targetCount}
           />
         </div>
       </div>

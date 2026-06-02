@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ProgressRing } from "@/components/ui/ProgressRing";
@@ -14,6 +14,7 @@ interface HabitCardProps {
   habit: Habit;
   streak: number;
   completedToday: boolean;
+  currentCount: number;
   completionRate: number;
   onToggle?: () => void;
 }
@@ -22,17 +23,17 @@ export function HabitCard({
   habit,
   streak,
   completedToday,
+  currentCount,
   completionRate,
   onToggle,
 }: HabitCardProps) {
-  const [checked, setChecked] = useState(completedToday);
+  const checked = completedToday;
   const [cardHovered, setCardHovered] = useState(false);
   const IconComponent = getIcon(habit.icon);
 
-  const handleToggle = () => {
-    setChecked((c) => !c);
+  const handleToggle = useCallback(() => {
     onToggle?.();
-  };
+  }, [onToggle]);
 
   return (
     <GlassCard
@@ -106,6 +107,8 @@ export function HabitCard({
           color={habit.color}
           size={44}
           cardHovered={cardHovered}
+          currentCount={currentCount}
+          targetCount={habit.targetCount}
         />
       </div>
 

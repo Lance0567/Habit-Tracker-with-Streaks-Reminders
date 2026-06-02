@@ -1,18 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+import { format } from "date-fns";
 import { useHabitStore } from "@/store/habitStore";
 import { useUIStore } from "@/store/uiStore";
 import { calculateCurrentStreak } from "@/lib/streaks";
 
-const MILESTONES = [7, 14, 30, 100] as const;
+// Highest-first so we celebrate the biggest milestone reached
+const MILESTONES = [100, 30, 14, 7] as const;
 const STORAGE_KEY = "habitflow_milestones_seen";
 
-function getSeenKey(habitId: string, milestone: number) {
-  return `${habitId}:${milestone}`;
-}
-
-function loadSeen(): Set<string> {
+function getSeenSet(): Set<string> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return new Set(raw ? JSON.parse(raw) : []);
@@ -22,10 +20,16 @@ function loadSeen(): Set<string> {
 }
 
 function markSeen(key: string) {
-  const seen = loadSeen();
-  seen.add(key);
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(seen)));
+    const seen = getSeenSet();
+    seen.add(key);
+    // Prune entries older than 7 days to prevent unbounded growth
+    const cutoff = format(new Date(Date.now() - 7 * 86_400_000), "yyyy-MM-dd");
+    const pruned = Array.from(seen).filter((k) => {
+      const date = k.split(":")[2];
+      return date ? date >= cutoff : false;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(pruned));
   } catch { /* quota exceeded — ignore */ }
 }
 
@@ -34,21 +38,20 @@ export function useMilestoneDetector() {
   const logs = useHabitStore((s) => s.logs);
   const isLoading = useHabitStore((s) => s.isLoading);
   const setMilestoneModal = useUIStore((s) => s.setMilestoneModal);
-  const prevStreaks = useRef<Record<string, number>>({});
 
   useEffect(() => {
     if (isLoading || habits.length === 0) return;
 
-    const seen = loadSeen();
+    const today = format(new Date(), "yyyy-MM-dd");
+    const seen = getSeenSet();
 
     for (const habit of habits) {
       if (habit.archived) continue;
       const streak = calculateCurrentStreak(logs, habit);
-      const prev = prevStreaks.current[habit.id] ?? 0;
 
       for (const milestone of MILESTONES) {
-        const key = getSeenKey(habit.id, milestone);
-        if (streak >= milestone && prev < milestone && !seen.has(key)) {
+        const key = `${habit.id}:${milestone}:${today}`;
+        if (streak >= milestone && !seen.has(key)) {
           markSeen(key);
           setMilestoneModal({
             habitId: habit.id,
@@ -56,11 +59,9 @@ export function useMilestoneDetector() {
             milestone,
             currentStreak: streak,
           });
-          break;
+          return; // one modal at a time
         }
       }
-
-      prevStreaks.current[habit.id] = streak;
     }
   }, [habits, logs, isLoading, setMilestoneModal]);
 }

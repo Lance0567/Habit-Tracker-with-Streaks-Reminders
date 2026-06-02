@@ -14,7 +14,9 @@ export function isHabitDueOnDate(habit: Habit, date: Date): boolean {
 
 export function calculateCurrentStreak(logs: HabitLog[], habit: Habit): number {
   const logDates = new Set(
-    logs.filter((l) => l.habitId === habit.id).map((l) => l.date)
+    logs
+      .filter((l) => l.habitId === habit.id && l.completedCount >= habit.targetCount)
+      .map((l) => l.date)
   );
   let streak = 0;
   let d = new Date();
@@ -38,7 +40,9 @@ export function calculateCurrentStreak(logs: HabitLog[], habit: Habit): number {
 
 export function getLongestStreak(logs: HabitLog[], habit: Habit): number {
   const logDates = new Set(
-    logs.filter((l) => l.habitId === habit.id).map((l) => l.date)
+    logs
+      .filter((l) => l.habitId === habit.id && l.completedCount >= habit.targetCount)
+      .map((l) => l.date)
   );
   if (logDates.size === 0) return 0;
 

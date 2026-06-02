@@ -22,10 +22,10 @@ export function useHabitStats(habitId: string) {
       completionRate7d: getCompletionRate(logs, habit, 7),
       completionRate30d: getCompletionRate(logs, habit, 30),
       completionRate90d: getCompletionRate(logs, habit, 90),
-      totalCompletions: logs.filter((l) => l.habitId === habitId).length,
+      totalCompletions: logs.filter((l) => l.habitId === habitId && l.completedCount >= habit.targetCount).length,
       currentStreak: calculateCurrentStreak(logs, habit),
       longestStreak: getLongestStreak(logs, habit),
-      heatMap: getHeatMapData(logs, habitId),
+      heatMap: getHeatMapData(logs, habitId, habit.targetCount),
     };
   }, [habit, logs, habitId]);
 }
@@ -83,8 +83,13 @@ export function useGlobalAnalytics() {
 
   const completedTodayCount = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
-    return new Set(logs.filter((l) => l.date === today).map((l) => l.habitId)).size;
-  }, [logs]);
+    const targetMap = new Map(activeHabits.map((h) => [h.id, h.targetCount]));
+    return new Set(
+      logs
+        .filter((l) => l.date === today && l.completedCount >= (targetMap.get(l.habitId) ?? 1))
+        .map((l) => l.habitId)
+    ).size;
+  }, [activeHabits, logs]);
 
   return {
     avgCompletionRate,
