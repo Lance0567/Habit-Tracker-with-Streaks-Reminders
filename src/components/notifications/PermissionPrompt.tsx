@@ -11,7 +11,10 @@ export function PermissionPrompt() {
   const settings = useHabitStore((s) => s.settings);
   const updateSettings = useHabitStore((s) => s.updateSettings);
   const [permission, setPermission] = useState<NotificationPermission | null>(null);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("notif-prompt-dismissed") === "1";
+  });
 
   useEffect(() => {
     if ("Notification" in window) setPermission(Notification.permission);
@@ -22,10 +25,18 @@ export function PermissionPrompt() {
     settings?.notificationsEnabled === true &&
     permission === "default";
 
+  function dismiss() {
+    localStorage.setItem("notif-prompt-dismissed", "1");
+    dismiss();
+  }
+
   async function handleAllow() {
-    const perm = await requestPermission();
-    setPermission(perm);
-    setDismissed(true);
+    try {
+      const perm = await requestPermission();
+      setPermission(perm);
+    } finally {
+      dismiss();
+    }
   }
 
   return (
@@ -70,13 +81,13 @@ export function PermissionPrompt() {
                   >
                     Allow
                   </GlassButton>
-                  <GlassButton variant="ghost" size="sm" onClick={() => setDismissed(true)}>
+                  <GlassButton variant="ghost" size="sm" onClick={() => dismiss()}>
                     Not now
                   </GlassButton>
                 </div>
               </div>
               <button
-                onClick={() => setDismissed(true)}
+                onClick={() => dismiss()}
                 className="text-white/25 hover:text-white/60 transition-colors"
               >
                 <X size={14} />
