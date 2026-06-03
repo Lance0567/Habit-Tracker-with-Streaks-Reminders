@@ -17,6 +17,7 @@ screenshot_final.mjs
 
 # claude internal
 .claude/
+.CLAUDE.md
 
 # skills
 .agents/

@@ -27,7 +27,7 @@ export function PermissionPrompt() {
 
   function dismiss() {
     localStorage.setItem("notif-prompt-dismissed", "1");
-    dismiss();
+    setDismissed(true);
   }
 
   async function handleAllow() {

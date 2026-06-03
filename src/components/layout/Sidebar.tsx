@@ -274,7 +274,7 @@ export function Sidebar() {
           onClick={toggleSidebar}
           animate={{ left: collapsed ? 58 : 226 }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="fixed z-[9998] top-[68px] flex items-center justify-center focus:outline-none"
+          className="hidden md:flex fixed z-[9998] top-[68px] items-center justify-center focus:outline-none"
           style={{
             width: 28,
             height: 28,

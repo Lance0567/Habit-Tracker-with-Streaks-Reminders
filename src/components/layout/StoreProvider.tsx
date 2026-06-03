@@ -7,6 +7,8 @@ import { useMilestoneDetector } from "@/hooks/useMilestoneDetector";
 import { PermissionPrompt } from "@/components/notifications/PermissionPrompt";
 import { MilestoneModal } from "@/components/habits/MilestoneModal";
 import { NewHabitModal } from "@/components/habits/NewHabitModal";
+import { NewCategoryModal } from "@/components/categories/NewCategoryModal";
+import { MobileFAB } from "@/components/layout/MobileFAB";
 
 function NotificationManager() {
   useNotifications();
@@ -31,6 +33,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       <NotificationManager />
       <MilestoneManager />
       <NewHabitModal />
+      <NewCategoryModal />
+      <MobileFAB />
     </>
   );
 }

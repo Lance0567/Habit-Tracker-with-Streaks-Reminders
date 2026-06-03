@@ -56,7 +56,7 @@ export function TopBar() {
 
       <div className="flex items-center gap-2">
         {!pathname.startsWith("/habits") && (
-          <GlassButton variant="primary" size="sm" onClick={() => setNewHabitOpen(true)}>
+          <GlassButton variant="primary" size="sm" className="hidden sm:flex" onClick={() => setNewHabitOpen(true)}>
             <Plus size={14} />
             New Habit
           </GlassButton>

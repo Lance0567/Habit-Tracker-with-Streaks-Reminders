@@ -522,7 +522,7 @@ function ExploreContent() {
         {tab === "programs" ? (
           <motion.div key="programs" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.2 }} className="space-y-5">
             {/* Sub-tabs */}
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {SUB_TABS.map(({ key, label }) => {
                 const count =
                   key === "my"        ? PROGRAMS.filter((p) => enrolledMap[p.id] && !enrolledMap[p.id]?.completedAt).length
@@ -533,7 +533,7 @@ function ExploreContent() {
                   <button
                     key={key}
                     onClick={() => switchSubTab(key)}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200"
+                    className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200"
                     style={
                       subTab === key
                         ? { background: "var(--color-accent)", color: "#fff" }
