@@ -56,7 +56,7 @@ export function MobileFAB() {
             transition={{ duration: 0.2, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
             onClick={action}
             className="fixed right-4 z-[61] flex items-center gap-3"
-            style={{ bottom: `${100 + (menuItems.length - 1 - i) * 60}px` }}
+            style={{ bottom: `${130 + (menuItems.length - 1 - i) * 60}px` }}
           >
             {/* Label pill */}
             <motion.span
@@ -98,7 +98,7 @@ export function MobileFAB() {
         onClick={() => setOpen((v) => !v)}
         className="fixed right-4 z-[62] w-14 h-14 rounded-full flex items-center justify-center shadow-lg focus:outline-none"
         style={{
-          bottom: "calc(68px + env(safe-area-inset-bottom, 0px))",
+          bottom: "calc(88px + env(safe-area-inset-bottom, 0px))",
           background: accentColor,
           boxShadow: `0 4px 20px ${accentColor}55, 0 0 0 ${open ? "4px" : "0px"} ${accentColor}30`,
           transition: "box-shadow 0.2s ease",
