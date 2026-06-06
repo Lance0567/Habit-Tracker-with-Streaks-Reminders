@@ -56,7 +56,7 @@ export function MobileFAB() {
             transition={{ duration: 0.2, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
             onClick={action}
             className="fixed right-4 z-[61] flex items-center gap-3"
-            style={{ bottom: `${130 + (menuItems.length - 1 - i) * 60}px` }}
+            style={{ bottom: `${160 + (menuItems.length - 1 - i) * 60}px` }}
           >
             {/* Label pill */}
             <motion.span

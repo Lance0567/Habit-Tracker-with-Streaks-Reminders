@@ -5,7 +5,7 @@ import { createMiddlewareClient } from "@/lib/supabase-server";
 const PROTECTED_ROUTES = [
   "/dashboard",
   "/habits",
-  "/analytics",
+  "/insights",
   "/categories",
   "/settings",
 ];

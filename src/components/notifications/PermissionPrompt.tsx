@@ -9,11 +9,15 @@ import { useHabitStore } from "@/store/habitStore";
 
 export function PermissionPrompt() {
   const settings = useHabitStore((s) => s.settings);
-  const updateSettings = useHabitStore((s) => s.updateSettings);
-  const [permission, setPermission] = useState<NotificationPermission | null>(null);
+  const [permission, setPermission] = useState<NotificationPermission | null>(() => {
+    if (typeof window === "undefined") return null;
+    return "Notification" in window ? Notification.permission : null;
+  });
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return false;
-    return localStorage.getItem("notif-prompt-dismissed") === "1";
+    if (localStorage.getItem("notif-prompt-dismissed") === "1") return true;
+    // Suppress if browser permission already granted (dismissed flag may have been cleared)
+    return "Notification" in window && Notification.permission === "granted";
   });
 
   useEffect(() => {

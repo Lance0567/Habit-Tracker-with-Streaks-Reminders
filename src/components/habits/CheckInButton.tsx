@@ -69,9 +69,9 @@ export function CheckInButton({
           cy={size / 2}
           r={(size - 4) / 2}
           fill="none"
-          stroke={cardHovered ? `${color}40` : "rgba(255,255,255,0.12)"}
           strokeWidth={2.5}
           strokeLinecap="round"
+          style={{ stroke: cardHovered ? `${color}40` : "var(--ring-track)" }}
         />
       </svg>
 
@@ -107,7 +107,7 @@ export function CheckInButton({
             ? `${color}18`
             : cardHovered
             ? `${color}18`
-            : "rgba(255,255,255,0.04)",
+            : "rgba(0,0,0,0)",
         }}
         transition={{ duration: 0.3 }}
       />

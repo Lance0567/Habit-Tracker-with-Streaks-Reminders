@@ -48,7 +48,7 @@ function LayoutShell({ children }: { children: React.ReactNode }) {
   const isAppRoute =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/habits") ||
-    pathname.startsWith("/analytics") ||
+    pathname.startsWith("/insights") ||
     pathname.startsWith("/explore") ||
     pathname.startsWith("/categories") ||
     pathname.startsWith("/settings");
