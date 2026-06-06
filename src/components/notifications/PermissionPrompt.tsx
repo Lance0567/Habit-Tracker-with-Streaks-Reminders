@@ -6,9 +6,11 @@ import { Bell, X } from "lucide-react";
 import { GlassButton } from "@/components/ui/GlassButton";
 import { requestPermission } from "@/lib/notifications";
 import { useHabitStore } from "@/store/habitStore";
+import { useCallback } from "react";
 
 export function PermissionPrompt() {
   const settings = useHabitStore((s) => s.settings);
+  const updateSettings = useHabitStore((s) => s.updateSettings);
   const [permission, setPermission] = useState<NotificationPermission | null>(() => {
     if (typeof window === "undefined") return null;
     return "Notification" in window ? Notification.permission : null;
@@ -29,17 +31,27 @@ export function PermissionPrompt() {
     settings?.notificationsEnabled === true &&
     permission === "default";
 
-  function dismiss() {
+  const dismiss = useCallback(() => {
     localStorage.setItem("notif-prompt-dismissed", "1");
     setDismissed(true);
-  }
+    // If the browser never actually granted permission, reflect that in DB so
+    // the prompt does not re-appear on next login or on other devices/browsers.
+    if (settings && "Notification" in window && Notification.permission !== "granted") {
+      updateSettings({ ...settings, notificationsEnabled: false });
+    }
+  }, [settings, updateSettings]);
 
   async function handleAllow() {
     try {
       const perm = await requestPermission();
       setPermission(perm);
+      // Sync the DB setting with the actual browser permission result
+      if (settings) {
+        updateSettings({ ...settings, notificationsEnabled: perm === "granted" });
+      }
     } finally {
-      dismiss();
+      localStorage.setItem("notif-prompt-dismissed", "1");
+      setDismissed(true);
     }
   }
 

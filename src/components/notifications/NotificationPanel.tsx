@@ -64,7 +64,16 @@ export function NotificationPanel({ open, onClose }: Props) {
 
   async function toggleNotifications() {
     if (!settings) return;
-    await updateSettings({ ...settings, notificationsEnabled: !notificationsOn });
+    if (!notificationsOn) {
+      // Must get browser permission before marking enabled in DB
+      if (!("Notification" in window)) return;
+      const perm = await Notification.requestPermission();
+      if (perm === "granted") {
+        await updateSettings({ ...settings, notificationsEnabled: true });
+      }
+    } else {
+      await updateSettings({ ...settings, notificationsEnabled: false });
+    }
   }
 
   return (
