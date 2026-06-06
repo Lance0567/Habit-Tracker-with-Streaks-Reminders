@@ -39,7 +39,7 @@ export function MobileFAB() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             className="fixed inset-0 z-[60]"
-            style={{ background: "rgba(15,10,40,0.45)", backdropFilter: "blur(3px)" }}
+            style={{ background: "rgb(0 0 0 / 85%)", backdropFilter: "blur(1.3px)" }}
             onClick={() => setOpen(false)}
           />
         )}
@@ -81,10 +81,10 @@ export function MobileFAB() {
             <div
               className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
               style={{
-                background: `${color}28`,
-                border: `1.5px solid ${color}80`,
-                boxShadow: `0 4px 16px ${color}50`,
-                color,
+                background: color,
+                border: `1.5px solid ${color}`,
+                boxShadow: `0 4px 20px ${color}66`,
+                color: "#ffffff",
               }}
             >
               <Icon size={20} />
