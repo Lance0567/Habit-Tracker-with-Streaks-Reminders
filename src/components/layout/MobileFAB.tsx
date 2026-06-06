@@ -39,7 +39,7 @@ export function MobileFAB() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             className="fixed inset-0 z-[60]"
-            style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(2px)" }}
+            style={{ background: "rgba(15,10,40,0.45)", backdropFilter: "blur(3px)" }}
             onClick={() => setOpen(false)}
           />
         )}
@@ -66,12 +66,12 @@ export function MobileFAB() {
               transition={{ duration: 0.15, delay: i * 0.05 + 0.05 }}
               className="text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap"
               style={{
-                background: "var(--glass-bg-elevated)",
-                backdropFilter: "blur(16px)",
-                WebkitBackdropFilter: "blur(16px)",
-                border: "1px solid var(--glass-border)",
+                background: "var(--popup-bg)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                border: `1px solid ${color}50`,
                 color: "var(--text-primary)",
-                boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+                boxShadow: `0 2px 8px rgba(0,0,0,0.14), 0 8px 24px rgba(0,0,0,0.12), 0 0 0 1px ${color}18`,
               }}
             >
               {label}
@@ -81,9 +81,9 @@ export function MobileFAB() {
             <div
               className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
               style={{
-                background: `${color}22`,
-                border: `1.5px solid ${color}55`,
-                boxShadow: `0 4px 16px ${color}30`,
+                background: `${color}28`,
+                border: `1.5px solid ${color}80`,
+                boxShadow: `0 4px 16px ${color}50`,
                 color,
               }}
             >

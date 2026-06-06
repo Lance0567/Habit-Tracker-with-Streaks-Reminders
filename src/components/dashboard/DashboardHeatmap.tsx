@@ -33,11 +33,15 @@ function buildGrid(): string[][] {
 
 function getMonthLabels(grid: string[][]): { weekIdx: number; label: string }[] {
   const labels: { weekIdx: number; label: string }[] = [];
+  const currentYear = new Date().getFullYear();
   let lastMonth = -1;
   for (let w = 0; w < grid.length; w++) {
-    const month = parseISO(grid[w][0]).getMonth();
+    const date = parseISO(grid[w][0]);
+    const month = date.getMonth();
+    // Skip weeks that fall in a prior year (partial Dec week at grid start)
+    if (date.getFullYear() < currentYear) { lastMonth = month; continue; }
     if (month !== lastMonth) {
-      labels.push({ weekIdx: w, label: format(parseISO(grid[w][0]), "MMM") });
+      labels.push({ weekIdx: w, label: format(date, "MMM") });
       lastMonth = month;
     }
   }
