@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, BellOff, Clock, X, ArrowRight, Compass } from "lucide-react";
 import { useHabitStore } from "@/store/habitStore";
+import { useUIStore } from "@/store/uiStore";
 import { getIcon } from "@/lib/icons";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -21,6 +22,7 @@ export function NotificationPanel({ open, onClose }: Props) {
   const habits        = useHabitStore((s) => s.habits);
   const settings      = useHabitStore((s) => s.settings);
   const updateSettings = useHabitStore((s) => s.updateSettings);
+  const addToast      = useUIStore((s) => s.addToast);
 
   const todayDow      = new Date().getDay();
   const notificationsOn = settings?.notificationsEnabled ?? false;
@@ -64,7 +66,28 @@ export function NotificationPanel({ open, onClose }: Props) {
 
   async function toggleNotifications() {
     if (!settings) return;
-    await updateSettings({ ...settings, notificationsEnabled: !notificationsOn });
+    if (!notificationsOn) {
+      if (!("Notification" in window)) return;
+      // Already granted — enable directly without re-prompting
+      if (Notification.permission === "granted") {
+        await updateSettings({ ...settings, notificationsEnabled: true });
+        return;
+      }
+      // Denied by browser — can't request programmatically, show guidance
+      if (Notification.permission === "denied") {
+        addToast("Notifications are blocked — enable them in your browser settings.", "error");
+        return;
+      }
+      // Default — ask the browser
+      const perm = await Notification.requestPermission();
+      if (perm === "granted") {
+        await updateSettings({ ...settings, notificationsEnabled: true });
+      } else {
+        addToast("Notifications were not allowed — enable them in your browser settings.", "error");
+      }
+    } else {
+      await updateSettings({ ...settings, notificationsEnabled: false });
+    }
   }
 
   return (

@@ -85,7 +85,7 @@ export default function AnalyticsPage() {
         className="flex items-start justify-between gap-4 flex-wrap"
       >
         <div>
-          <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Analytics</h2>
+          <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Insights</h2>
           <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>Your habit performance at a glance</p>
         </div>
 

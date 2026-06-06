@@ -6,12 +6,21 @@ import { Bell, X } from "lucide-react";
 import { GlassButton } from "@/components/ui/GlassButton";
 import { requestPermission } from "@/lib/notifications";
 import { useHabitStore } from "@/store/habitStore";
+import { useCallback } from "react";
 
 export function PermissionPrompt() {
   const settings = useHabitStore((s) => s.settings);
   const updateSettings = useHabitStore((s) => s.updateSettings);
-  const [permission, setPermission] = useState<NotificationPermission | null>(null);
-  const [dismissed, setDismissed] = useState(false);
+  const [permission, setPermission] = useState<NotificationPermission | null>(() => {
+    if (typeof window === "undefined") return null;
+    return "Notification" in window ? Notification.permission : null;
+  });
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    if (localStorage.getItem("notif-prompt-dismissed") === "1") return true;
+    // Suppress if browser permission already granted (dismissed flag may have been cleared)
+    return "Notification" in window && Notification.permission === "granted";
+  });
 
   useEffect(() => {
     if ("Notification" in window) setPermission(Notification.permission);
@@ -22,10 +31,28 @@ export function PermissionPrompt() {
     settings?.notificationsEnabled === true &&
     permission === "default";
 
-  async function handleAllow() {
-    const perm = await requestPermission();
-    setPermission(perm);
+  const dismiss = useCallback(() => {
+    localStorage.setItem("notif-prompt-dismissed", "1");
     setDismissed(true);
+    // If the browser never actually granted permission, reflect that in DB so
+    // the prompt does not re-appear on next login or on other devices/browsers.
+    if (settings && "Notification" in window && Notification.permission !== "granted") {
+      updateSettings({ ...settings, notificationsEnabled: false });
+    }
+  }, [settings, updateSettings]);
+
+  async function handleAllow() {
+    try {
+      const perm = await requestPermission();
+      setPermission(perm);
+      // Sync the DB setting with the actual browser permission result
+      if (settings) {
+        updateSettings({ ...settings, notificationsEnabled: perm === "granted" });
+      }
+    } finally {
+      localStorage.setItem("notif-prompt-dismissed", "1");
+      setDismissed(true);
+    }
   }
 
   return (
@@ -70,13 +97,13 @@ export function PermissionPrompt() {
                   >
                     Allow
                   </GlassButton>
-                  <GlassButton variant="ghost" size="sm" onClick={() => setDismissed(true)}>
+                  <GlassButton variant="ghost" size="sm" onClick={() => dismiss()}>
                     Not now
                   </GlassButton>
                 </div>
               </div>
               <button
-                onClick={() => setDismissed(true)}
+                onClick={() => dismiss()}
                 className="text-white/25 hover:text-white/60 transition-colors"
               >
                 <X size={14} />

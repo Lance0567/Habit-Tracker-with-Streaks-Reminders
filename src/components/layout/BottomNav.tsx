@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/habits", icon: CheckSquare, label: "Habits" },
-  { href: "/analytics", icon: BarChart3, label: "Analytics" },
+  { href: "/insights", icon: BarChart3, label: "Insights" },
   { href: "/explore", icon: Compass, label: "Explore" },
   { href: "/categories", icon: Tag, label: "Categories" },
   { href: "/settings", icon: Settings, label: "Settings" },

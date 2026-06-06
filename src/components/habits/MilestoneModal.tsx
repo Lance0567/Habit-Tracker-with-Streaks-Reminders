@@ -30,7 +30,7 @@ export function MilestoneModal() {
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 z-50"
+            className="fixed inset-0 z-[10000]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -41,7 +41,7 @@ export function MilestoneModal() {
 
           {/* Panel */}
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none"
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-6 pointer-events-none"
             initial={{ opacity: 0, scale: 0.88, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 12 }}

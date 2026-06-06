@@ -11,6 +11,7 @@ import {
   SlidersHorizontal,
   Bell,
   ChevronDown,
+  Plus,
 } from "lucide-react";
 import { ReminderForm } from "@/components/notifications/ReminderForm";
 import { useCategories } from "@/hooks/useCategories";
@@ -36,7 +37,7 @@ const COLOR_NAMES: Record<string, string> = {
 
 function HabitForm({ onClose }: { onClose: () => void }) {
   const { categories } = useCategories();
-  const { addHabit } = useHabitStore();
+  const { addHabit, addCategory } = useHabitStore();
   const addToast = useUIStore((s) => s.addToast);
 
   const [name, setName] = useState("");
@@ -50,6 +51,10 @@ function HabitForm({ onClose }: { onClose: () => void }) {
   const [saving, setSaving] = useState(false);
   const [showDesc, setShowDesc] = useState(false);
   const [showReminders, setShowReminders] = useState(false);
+  const [showNewCat, setShowNewCat] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatColor, setNewCatColor] = useState("#7C3AED");
+  const [savingCat, setSavingCat] = useState(false);
 
   const handleCreate = async () => {
     if (!name.trim()) return;
@@ -78,6 +83,21 @@ function HabitForm({ onClose }: { onClose: () => void }) {
     } catch {
       addToast("Failed to save habit. Please try again.", "error");
       setSaving(false);
+    }
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCatName.trim()) return;
+    setSavingCat(true);
+    try {
+      const id = crypto.randomUUID();
+      await addCategory({ id, name: newCatName.trim(), color: newCatColor, icon: "Tag", createdAt: new Date().toISOString() });
+      setCategoryId(id);
+      setNewCatName("");
+      setNewCatColor("#7C3AED");
+      setShowNewCat(false);
+    } finally {
+      setSavingCat(false);
     }
   };
 
@@ -198,6 +218,7 @@ function HabitForm({ onClose }: { onClose: () => void }) {
 
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--text-muted)" }}>Category</p>
+
           <div className="flex flex-wrap gap-1.5">
             {categories.map((cat) => {
               const isSelected = categoryId === cat.id;
@@ -206,18 +227,122 @@ function HabitForm({ onClose }: { onClose: () => void }) {
                   key={cat.id}
                   type="button"
                   onClick={() => setCategoryId(isSelected ? null : cat.id)}
-                  className="text-xs px-2.5 py-1 rounded-full transition-all duration-200 font-medium"
+                  className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full transition-all duration-200 font-medium"
                   style={
                     isSelected
                       ? { background: `${cat.color}22`, border: `1px solid ${cat.color}`, color: cat.color }
                       : { background: "var(--glass-bg-subtle)", border: "1px solid var(--glass-border)", color: "var(--text-secondary)" }
                   }
                 >
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cat.color }} />
                   {cat.name}
                 </button>
               );
             })}
+
+            {!showNewCat && (
+              <motion.button
+                type="button"
+                onClick={() => setShowNewCat(true)}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                className="flex items-center gap-1 text-xs px-2 py-1 rounded-full transition-colors duration-150 font-medium"
+                style={{
+                  background: "transparent",
+                  border: "1px dashed var(--glass-border-hover)",
+                  color: "var(--text-muted)",
+                }}
+              >
+                <Plus size={10} strokeWidth={2.5} />
+                New
+              </motion.button>
+            )}
           </div>
+
+          {/* Inline new-category form */}
+          <AnimatePresence>
+            {showNewCat && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className="overflow-hidden"
+              >
+                <div
+                  className="rounded-xl p-2.5 space-y-2.5 mt-0.5"
+                  style={{
+                    background: "var(--glass-bg-subtle)",
+                    border: `1px solid ${newCatColor}44`,
+                  }}
+                >
+                  <input
+                    autoFocus
+                    type="text"
+                    value={newCatName}
+                    onChange={(e) => setNewCatName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newCatName.trim()) handleAddCategory();
+                      if (e.key === "Escape") { setShowNewCat(false); setNewCatName(""); setNewCatColor("#7C3AED"); }
+                    }}
+                    placeholder="Category name…"
+                    maxLength={30}
+                    className="w-full bg-transparent border-none outline-none text-xs font-medium placeholder:opacity-40"
+                    style={{ color: "var(--text-primary)" }}
+                  />
+
+                  <div className="flex items-center justify-between gap-2">
+                    {/* Micro color swatches */}
+                    <div className="flex gap-1 flex-wrap">
+                      {HABIT_COLORS.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setNewCatColor(c)}
+                          className="rounded-full transition-all duration-150 focus-visible:outline-none"
+                          aria-label={COLOR_NAMES[c] ?? c}
+                          style={{
+                            width: 13,
+                            height: 13,
+                            background: c,
+                            transform: newCatColor === c ? "scale(1.3)" : "scale(1)",
+                            outline: newCatColor === c ? `2px solid ${c}` : "2px solid transparent",
+                            outlineOffset: 1,
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => { setShowNewCat(false); setNewCatName(""); setNewCatColor("#7C3AED"); }}
+                        className="text-[10px] font-medium transition-colors"
+                        style={{ color: "var(--text-muted)" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAddCategory}
+                        disabled={!newCatName.trim() || savingCat}
+                        className="text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all duration-150 disabled:opacity-40"
+                        style={{
+                          background: newCatName.trim() ? newCatColor : "var(--glass-bg-default)",
+                          color: newCatName.trim() ? "#fff" : "var(--text-muted)",
+                          boxShadow: newCatName.trim() ? `0 2px 8px ${newCatColor}55` : "none",
+                        }}
+                      >
+                        {savingCat ? "…" : "Add"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
@@ -442,7 +567,7 @@ export function NewHabitModal() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50"
+            className="fixed inset-0 z-[10000]"
             style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }}
             onClick={close}
           />
@@ -454,7 +579,7 @@ export function NewHabitModal() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 16 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4"
+            className="fixed inset-0 z-[10000] flex items-center justify-center pointer-events-none p-4"
           >
             <div
               className="w-full max-w-lg rounded-2xl pointer-events-auto flex flex-col"

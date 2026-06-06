@@ -12,16 +12,19 @@ interface DashboardHeatmapProps {
   accentColor: string;
 }
 
-const WEEKS = 12;
 const CELL = 10;
 const GAP = 2;
 const STRIDE = CELL + GAP;
 
 function buildGrid(): string[][] {
   const today = new Date();
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-  const gridStart = addDays(weekStart, -(WEEKS - 1) * 7);
-  return Array.from({ length: WEEKS }, (_, w) =>
+  const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+  // Always start from the Monday of the week containing Jan 1 of this year
+  const janFirst = new Date(today.getFullYear(), 0, 1);
+  const gridStart = startOfWeek(janFirst, { weekStartsOn: 1 });
+  const diffDays = Math.round((currentWeekStart.getTime() - gridStart.getTime()) / 86400000);
+  const weeks = Math.floor(diffDays / 7) + 1;
+  return Array.from({ length: weeks }, (_, w) =>
     Array.from({ length: 7 }, (_, d) =>
       format(addDays(gridStart, w * 7 + d), "yyyy-MM-dd")
     )
@@ -30,11 +33,15 @@ function buildGrid(): string[][] {
 
 function getMonthLabels(grid: string[][]): { weekIdx: number; label: string }[] {
   const labels: { weekIdx: number; label: string }[] = [];
+  const currentYear = new Date().getFullYear();
   let lastMonth = -1;
   for (let w = 0; w < grid.length; w++) {
-    const month = parseISO(grid[w][0]).getMonth();
+    const date = parseISO(grid[w][0]);
+    const month = date.getMonth();
+    // Skip weeks that fall in a prior year (partial Dec week at grid start)
+    if (date.getFullYear() < currentYear) { lastMonth = month; continue; }
     if (month !== lastMonth) {
-      labels.push({ weekIdx: w, label: format(parseISO(grid[w][0]), "MMM") });
+      labels.push({ weekIdx: w, label: format(date, "MMM") });
       lastMonth = month;
     }
   }
@@ -62,11 +69,11 @@ export function DashboardHeatmap({ logs, habits, accentColor }: DashboardHeatmap
   const monthLabels = useMemo(() => getMonthLabels(grid), [grid]);
 
   const aggregateMap = useMemo(() => {
-    const data = getAggregateHeatMapData(logs, habits, WEEKS * 7);
+    const data = getAggregateHeatMapData(logs, habits, grid.length * 7);
     return new Map(data.map((d) => [d.date, d]));
-  }, [logs, habits.length]);
+  }, [logs, habits, grid.length]);
 
-  const gridW = WEEKS * STRIDE - GAP;
+  const gridW = grid.length * STRIDE - GAP;
 
   function onEnter(e: React.MouseEvent, date: string, label: string, color: string) {
     setTooltip({ x: e.clientX, y: e.clientY, date, label, color });
@@ -84,7 +91,7 @@ export function DashboardHeatmap({ logs, habits, accentColor }: DashboardHeatmap
       }}
     >
       <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
-        Last 12 Weeks
+        {new Date().getFullYear()} Overview
       </p>
 
       {/* Month labels */}
@@ -104,7 +111,7 @@ export function DashboardHeatmap({ logs, habits, accentColor }: DashboardHeatmap
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${WEEKS}, ${CELL}px)`,
+          gridTemplateColumns: `repeat(${grid.length}, ${CELL}px)`,
           gridTemplateRows: `repeat(7, ${CELL}px)`,
           gap: GAP,
           width: gridW,

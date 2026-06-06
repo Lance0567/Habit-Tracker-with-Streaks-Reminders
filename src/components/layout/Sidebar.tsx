@@ -62,7 +62,7 @@ export function Sidebar() {
   const navItems: NavItem[] = [
     { href: "/dashboard",  icon: LayoutDashboard, label: "Dashboard",  color: "#06B6D4",   group: "MAIN"   },
     { href: "/habits",     icon: CheckSquare,      label: "Habits",     color: accentColor, group: "MAIN"   },
-    { href: "/analytics",  icon: BarChart3,        label: "Analytics",  color: "#F59E0B",   group: "MAIN"   },
+    { href: "/insights",   icon: BarChart3,        label: "Insights",   color: "#F59E0B",   group: "MAIN"   },
     { href: "/explore",    icon: Compass,          label: "Explore",    color: "#EC4899",   group: "MAIN"   },
     { href: "/categories", icon: Tag,              label: "Categories", color: "#10B981",   group: "SYSTEM" },
     { href: "/settings",   icon: Settings,         label: "Settings",   color: "#94A3B8",   group: "SYSTEM" },
@@ -274,7 +274,7 @@ export function Sidebar() {
           onClick={toggleSidebar}
           animate={{ left: collapsed ? 58 : 226 }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="fixed z-[9998] top-[68px] flex items-center justify-center focus:outline-none"
+          className="hidden md:flex fixed z-[9998] top-[68px] items-center justify-center focus:outline-none"
           style={{
             width: 28,
             height: 28,

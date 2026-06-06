@@ -65,7 +65,7 @@ function HabitsContent() {
               onClick={() => handleSetView("grid")}
               className={clsx(
                 "p-2 transition-colors",
-                view === "grid" ? "bg-[var(--color-accent)]/20 text-[var(--color-accent-light)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                view === "grid" ? "bg-[var(--color-accent)]/20 text-[var(--color-accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
               )}
               aria-label="Grid view"
             >
@@ -75,7 +75,7 @@ function HabitsContent() {
               onClick={() => handleSetView("list")}
               className={clsx(
                 "p-2 transition-colors",
-                view === "list" ? "bg-[var(--color-accent)]/20 text-[var(--color-accent-light)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                view === "list" ? "bg-[var(--color-accent)]/20 text-[var(--color-accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
               )}
               aria-label="List view"
             >

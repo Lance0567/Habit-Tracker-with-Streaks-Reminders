@@ -47,7 +47,7 @@ export function GlassButton({
         sizeClasses[size],
         className
       )}
-      whileHover={disabled || loading ? {} : { y: -1 }}
+      whileHover={{}}
       whileTap={disabled || loading ? {} : { scale: 0.97 }}
       disabled={disabled || loading}
       {...props}
