@@ -82,6 +82,8 @@ export function NotificationPanel({ open, onClose }: Props) {
       const perm = await Notification.requestPermission();
       if (perm === "granted") {
         await updateSettings({ ...settings, notificationsEnabled: true });
+      } else {
+        addToast("Notifications were not allowed — enable them in your browser settings.", "error");
       }
     } else {
       await updateSettings({ ...settings, notificationsEnabled: false });

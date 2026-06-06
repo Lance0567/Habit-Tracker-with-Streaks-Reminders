@@ -60,7 +60,11 @@ export default function SettingsPage() {
       return;
     }
     const perm = await Notification.requestPermission();
-    if (perm === "granted") await updateSettings({ ...settings, notificationsEnabled: true });
+    if (perm === "granted") {
+      await updateSettings({ ...settings, notificationsEnabled: true });
+    } else {
+      addToast("Notifications were not allowed — enable them in your browser settings.", "error");
+    }
   };
 
   const handleWeekStart = async (day: 0 | 1) => {
