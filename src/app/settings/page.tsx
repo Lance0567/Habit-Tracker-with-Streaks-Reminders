@@ -6,11 +6,13 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { GlassButton } from "@/components/ui/GlassButton";
 import { Spinner } from "@/components/ui/Spinner";
 import { useHabitStore } from "@/store/habitStore";
+import { useUIStore } from "@/store/uiStore";
 import { THEME_PRESETS, getTheme } from "@/lib/themes";
 import * as storage from "@/lib/storage";
 
 export default function SettingsPage() {
   const { settings, isLoading, updateSettings, resetData } = useHabitStore();
+  const addToast = useUIStore((s) => s.addToast);
 
   const handleExport = async () => {
     const json = await storage.exportData();
@@ -44,10 +46,21 @@ export default function SettingsPage() {
 
   const handleNotifications = async () => {
     if (!settings) return;
-    const permission = await Notification.requestPermission();
-    if (permission === "granted") {
-      await updateSettings({ ...settings, notificationsEnabled: true });
+    if (settings.notificationsEnabled) {
+      await updateSettings({ ...settings, notificationsEnabled: false });
+      return;
     }
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "granted") {
+      await updateSettings({ ...settings, notificationsEnabled: true });
+      return;
+    }
+    if (Notification.permission === "denied") {
+      addToast("Notifications are blocked — enable them in your browser settings.", "error");
+      return;
+    }
+    const perm = await Notification.requestPermission();
+    if (perm === "granted") await updateSettings({ ...settings, notificationsEnabled: true });
   };
 
   const handleWeekStart = async (day: 0 | 1) => {
@@ -94,14 +107,31 @@ export default function SettingsPage() {
             ? "Notifications are enabled"
             : "Get reminded when it's time to check in",
           action: (
-            <GlassButton
-              variant={settings?.notificationsEnabled ? "secondary" : "primary"}
-              size="sm"
+            <button
               onClick={handleNotifications}
-              disabled={settings?.notificationsEnabled}
+              aria-label={settings?.notificationsEnabled ? "Disable notifications" : "Enable notifications"}
+              style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
             >
-              {settings?.notificationsEnabled ? "Enabled" : "Enable"}
-            </GlassButton>
+              <div
+                style={{
+                  width: 44, height: 24, borderRadius: 12, position: "relative",
+                  background: settings?.notificationsEnabled ? "var(--color-accent)" : "var(--glass-bg-subtle)",
+                  border: `1px solid ${settings?.notificationsEnabled ? "var(--color-accent)" : "var(--glass-border)"}`,
+                  transition: "background 0.2s, border-color 0.2s",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute", top: 2,
+                    left: settings?.notificationsEnabled ? 22 : 2,
+                    width: 18, height: 18, borderRadius: "50%",
+                    background: "#fff",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.25)",
+                    transition: "left 0.2s",
+                  }}
+                />
+              </div>
+            </button>
           ),
         },
       ],

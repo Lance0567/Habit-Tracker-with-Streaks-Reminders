@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, BellOff, Clock, X, ArrowRight, Compass } from "lucide-react";
 import { useHabitStore } from "@/store/habitStore";
+import { useUIStore } from "@/store/uiStore";
 import { getIcon } from "@/lib/icons";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -21,6 +22,7 @@ export function NotificationPanel({ open, onClose }: Props) {
   const habits        = useHabitStore((s) => s.habits);
   const settings      = useHabitStore((s) => s.settings);
   const updateSettings = useHabitStore((s) => s.updateSettings);
+  const addToast      = useUIStore((s) => s.addToast);
 
   const todayDow      = new Date().getDay();
   const notificationsOn = settings?.notificationsEnabled ?? false;
@@ -71,8 +73,11 @@ export function NotificationPanel({ open, onClose }: Props) {
         await updateSettings({ ...settings, notificationsEnabled: true });
         return;
       }
-      // Denied by browser — can't request programmatically, do nothing
-      if (Notification.permission === "denied") return;
+      // Denied by browser — can't request programmatically, show guidance
+      if (Notification.permission === "denied") {
+        addToast("Notifications are blocked — enable them in your browser settings.", "error");
+        return;
+      }
       // Default — ask the browser
       const perm = await Notification.requestPermission();
       if (perm === "granted") {
